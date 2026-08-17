@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>命理格局测试</title>
@@ -588,7 +587,7 @@
                 <label>性别</label>
                 <div class="gender-group">
                     <div class="gender-option">
-                        <input type="radio" id="gender-male" name="gender" value="male" checked>
+                        <input type="radio" id="gender-male" name="gender" value="male" checked="">
                         <label for="gender-male">男</label>
                     </div>
                     <div class="gender-option">
@@ -598,7 +597,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-submit">确定</button>
+            <button type="submit" id="submitBtn" class="btn btn-submit">开始测算</button>
             </form>
         </div>
 
@@ -660,6 +659,21 @@
     </div>
 
     <script>
+        // ========== AI 代理配置 ==========
+        // 三种访问场景自动适配：
+        //   1) 本地 Node 服务器 (http://localhost:3000) → 走本地 /api/comment
+        //   2) 直接双击 HTML (file://) 或 GitHub Pages (https://xxx.github.io) → 走 Vercel 远程代理
+        // API Key 仅存储在 Vercel 环境变量中，前端代码不会泄露
+        const IS_FILE_PROTOCOL = (location.protocol === 'file:');
+        const IS_LOCAL_SERVER = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+        const USE_REMOTE_PROXY = IS_FILE_PROTOCOL || !IS_LOCAL_SERVER;
+        const AI_PROXY_URL = USE_REMOTE_PROXY
+            ? 'https://1-alpha-ecru-95.vercel.app/api/comment'
+            : '/api/comment';
+        console.log('[AI] 代理模式：', USE_REMOTE_PROXY ? 'Vercel 远程代理' : '本地 Node 代理', '→', AI_PROXY_URL);
+        // 强制使用 AI 评语，不回退到 Mock（如果 AI 失败会显示错误提示）
+        const FALLBACK_TO_MOCK = false;
+
         // ========== 库加载状态检查 ==========
         // lunar-javascript 库必须正确加载才能计算八字
         window.addEventListener('load', function() {
@@ -1617,24 +1631,173 @@
             };
         }
 
-        // ========== 构造大模型 Prompt ==========
-        function generateBaziAnalysis(bazi, dayMaster, stats, gender) {
-            // 格式化五行统计描述
+        // ========== 前端格局判定（使用传统子平八字规则） ==========
+        function determinePattern(bazi, stats) {
+            const { dayMasterGan, wuxingStats, monthSupport, yinBiCheck, hasGuanSha, caiCount, sortedWuxing, allGans } = stats;
+            const monthZhi = bazi.monthPillar[1];
+            const monthCangGan = zhiCangGan[monthZhi] || [];
+            const monthBenQi = monthCangGan[0];
+
+            // 获取月令所有藏干的十神
+            const monthShishen = monthCangGan.map(g => getShishen(dayMasterGan, g));
+            const hasYin = monthShishen.includes("正印") || monthShishen.includes("偏印");
+            const hasBi = monthShishen.includes("比肩") || monthShishen.includes("劫财");
+            const hasShiShen = monthShishen.includes("食神");
+            const hasShangGuan = monthShishen.includes("伤官");
+            const hasCai = monthShishen.includes("正财") || monthShishen.includes("偏财");
+            const hasGuan = monthShishen.includes("正官");
+            const hasQiSha = monthShishen.includes("七杀");
+
+            // ========== 优先级 1：特殊格局 ==========
+            // 专旺格：日主得月令 + 无官杀 + 财多身旺
+            if (monthSupport.supported && !hasGuanSha && caiCount >= 3) {
+                return { pattern: "专旺格", reason: "日主得月令且无官杀，财多身旺" };
+            }
+
+            // 从格：全局无印比
+            if (!yinBiCheck.hasAny) {
+                // 看哪个五行最旺
+                const topWuxing = sortedWuxing.length > 0 ? sortedWuxing[0][0] : "";
+                const dayWuxing = ganWuxing[dayMasterGan];
+                
+                if (topWuxing) {
+                    // 从儿格：食伤旺
+                    const woSheng = { "木": "火", "火": "土", "土": "金", "金": "水", "水": "木" };
+                    if (woSheng[dayWuxing] === topWuxing) {
+                        return { pattern: "从儿格", reason: "全局无印比，食伤成势" };
+                    }
+                    // 从财格：财旺
+                    const woKe = { "木": "土", "土": "水", "水": "火", "火": "金", "金": "木" };
+                    if (woKe[dayWuxing] === topWuxing) {
+                        return { pattern: "从财格", reason: "全局无印比，财星成势" };
+                    }
+                    // 从杀格：官杀旺
+                    const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
+                    if (keWo[dayWuxing] === topWuxing) {
+                        return { pattern: "从杀格", reason: "全局无印比，官杀成势" };
+                    }
+                }
+            }
+
+            // ========== 优先级 2：月令本气格 ==========
+            const benQiShishen = getShishen(dayMasterGan, monthBenQi);
+            
+            // 建禄格 / 羊刃格
+            const luOrRen = getLuOrRen(dayMasterGan, monthZhi);
+            if (luOrRen === "建禄") {
+                return { pattern: "建禄格", reason: `月支${monthZhi}为${dayMasterGan}的禄` };
+            }
+            if (luOrRen === "羊刃") {
+                return { pattern: "羊刃格", reason: `月支${monthZhi}为${dayMasterGan}的羊刃` };
+            }
+
+            // 食神格 / 伤官格 / 食伤混杂格
+            if (benQiShishen === "食神" && hasShangGuan) {
+                return { pattern: "食伤混杂格", reason: "月令藏干同时含食神和伤官" };
+            }
+            if (benQiShishen === "伤官" && hasShiShen) {
+                return { pattern: "食伤混杂格", reason: "月令藏干同时含食神和伤官" };
+            }
+            if (benQiShishen === "食神") {
+                return { pattern: "食神格", reason: `月令本气${monthBenQi}为食神` };
+            }
+            if (benQiShishen === "伤官") {
+                return { pattern: "伤官格", reason: `月令本气${monthBenQi}为伤官` };
+            }
+
+            // 正财格 / 偏财格 / 正偏财混杂格
+            if ((benQiShishen === "正财" || benQiShishen === "偏财") && hasCai) {
+                const hasZhengCai = monthShishen.includes("正财");
+                const hasPianCai = monthShishen.includes("偏财");
+                if (hasZhengCai && hasPianCai) {
+                    return { pattern: "正偏财混杂格", reason: "月令藏干同时含正财和偏财" };
+                }
+                return { pattern: benQiShishen === "正财" ? "正财格" : "偏财格", reason: `月令本气${monthBenQi}为${benQiShishen}` };
+            }
+
+            // 正官格 / 七杀格 / 官杀混杂格
+            if ((benQiShishen === "正官" || benQiShishen === "七杀") && (hasGuan || hasQiSha)) {
+                if (hasGuan && hasQiSha) {
+                    return { pattern: "官杀混杂格", reason: "月令藏干同时含正官和七杀" };
+                }
+                return { pattern: benQiShishen === "正官" ? "正官格" : "七杀格", reason: `月令本气${monthBenQi}为${benQiShishen}` };
+            }
+
+            // 正印格 / 偏印格 / 正偏印混杂格
+            if ((benQiShishen === "正印" || benQiShishen === "偏印") && hasYin) {
+                const hasZhengYin = monthShishen.includes("正印");
+                const hasPianYin = monthShishen.includes("偏印");
+                if (hasZhengYin && hasPianYin) {
+                    return { pattern: "正偏印混杂格", reason: "月令藏干同时含正印和偏印" };
+                }
+                return { pattern: benQiShishen === "正印" ? "正印格" : "偏印格", reason: `月令本气${monthBenQi}为${benQiShishen}` };
+            }
+
+            // ========== 优先级 3：五行数量最多决定格局 ==========
+            if (sortedWuxing.length > 0) {
+                const topWuxing = sortedWuxing[0];
+                const topCount = topWuxing[1].count;
+                const topGans = topWuxing[1].gans;
+                
+                // 获取最旺五行的十神类型
+                const topShishenList = topGans.map(g => getShishen(dayMasterGan, g));
+                
+                // 检查是否有阴阳混杂
+                const hasYang = topShishenList.some(s => ["偏财", "七杀", "偏印", "食神", "劫财"].includes(s));
+                const hasYinInTop = topShishenList.some(s => ["正财", "正官", "正印", "伤官", "比肩"].includes(s));
+                
+                if (hasYang && hasYinInTop && topCount >= 2) {
+                    // 混杂判定
+                    if (topShishenList.includes("正财") || topShishenList.includes("偏财")) {
+                        return { pattern: "正偏财混杂格", reason: `${topWuxing[0]}行正偏财并见` };
+                    }
+                    if (topShishenList.includes("正官") || topShishenList.includes("七杀")) {
+                        return { pattern: "官杀混杂格", reason: `${topWuxing[0]}行官杀并见` };
+                    }
+                    if (topShishenList.includes("正印") || topShishenList.includes("偏印")) {
+                        return { pattern: "正偏印混杂格", reason: `${topWuxing[0]}行正偏印并见` };
+                    }
+                    if (topShishenList.includes("食神") || topShishenList.includes("伤官")) {
+                        return { pattern: "食伤混杂格", reason: `${topWuxing[0]}行食伤并见` };
+                    }
+                }
+                
+                // 单一五行格
+                const mainShishen = topShishenList.find(s => s && s !== "比肩" && s !== "劫财") || topShishenList[0];
+                switch (mainShishen) {
+                    case "正财": return { pattern: "正财格", reason: `${topWuxing[0]}行最旺` };
+                    case "偏财": return { pattern: "偏财格", reason: `${topWuxing[0]}行最旺` };
+                    case "正官": return { pattern: "正官格", reason: `${topWuxing[0]}行最旺` };
+                    case "七杀": return { pattern: "七杀格", reason: `${topWuxing[0]}行最旺` };
+                    case "正印": return { pattern: "正印格", reason: `${topWuxing[0]}行最旺` };
+                    case "偏印": return { pattern: "偏印格", reason: `${topWuxing[0]}行最旺` };
+                    case "食神": return { pattern: "食神格", reason: `${topWuxing[0]}行最旺` };
+                    case "伤官": return { pattern: "伤官格", reason: `${topWuxing[0]}行最旺` };
+                    default: break;
+                }
+            }
+
+            // ========== 兜底 ==========
+            return { pattern: "日主格", reason: "无明显格局，以日主为中心" };
+        }
+
+        // ========== 构造大模型 Prompt（AI 只负责写评语） ==========
+        function generateBaziAnalysis(bazi, dayMaster, stats, gender, patternResult) {
+            // 格式化五行统计描述（不显示具体数字）
             const wuxingDesc = Object.entries(stats.wuxingStats)
                 .filter(([_, v]) => v.count > 0)
                 .map(([wx, v]) => {
                     const yinYang = [];
                     if (v.hasYang) yinYang.push("阳");
                     if (v.hasYin) yinYang.push("阴");
-                    const gansStr = v.gans.join("、");
-                    return `${wx}${v.count}个（含${yinYang.join("/")}：${gansStr}）`;
+                    return `${wx}偏旺（含${yinYang.join("/")}：${v.gans.join("、")}）`;
                 })
                 .join("，");
 
             // 格式化最多五行
             const topWuxing = stats.sortedWuxing.length > 0 ? stats.sortedWuxing[0] : null;
             const topDesc = topWuxing
-                ? `${topWuxing[0]}最旺（${topWuxing[1].count}个，含${topWuxing[1].gans.join("、")}）`
+                ? `${topWuxing[0]}最旺（含${topWuxing[1].gans.join("、")}）`
                 : "五行分布较均匀";
 
             // 月令描述
@@ -1651,18 +1814,20 @@
             const guanShaDesc = stats.hasGuanSha ? "全局有官杀" : "全局无官杀";
 
             // 财星描述
-            const caiDesc = `财星数量：${stats.caiCount}个`;
+            const caiDesc = stats.caiCount >= 3 ? "财星旺盛" : "财星配置适中";
 
-            // 地支分类描述
-            const zhiClassDesc = `
-- 外出类（寅、申、巳、亥）：${stats.travelCount}个
-- 桃花类（子、午、卯、酉）：${stats.taohuaCount}个
-- 独立类（辰、戌、丑、未）：${stats.independenceCount}个
-- 扩展规则：某类地支>=2个时，需扩展相关评语（外出发展/桃花运势/独立特质）`;
+            // 地支分类描述（定性而非定量）
+            const zhiClassDesc = [];
+            if (stats.travelCount >= 2) zhiClassDesc.push("外出类地支较多（寅申巳亥≥2个）");
+            if (stats.taohuaCount >= 2) zhiClassDesc.push("桃花类地支较多（子午卯酉≥2个）");
+            if (stats.independenceCount >= 2) zhiClassDesc.push("独立类地支较多（辰戌丑未≥2个）");
+            const zhiDesc = zhiClassDesc.length > 0 
+                ? `地支特征：${zhiClassDesc.join("、")}` 
+                : "地支分布较为均衡";
 
             const genderDesc = gender === "male" ? "男命" : "女命";
 
-            const prompt = `你是一位精通传统子平八字的资深命理师。请根据以下客观数据，严格按照三个步骤撰写一段专业的命理评语：
+            const prompt = `你是一位精通传统子平八字的资深命理师。请根据以下客观数据和已判定的格局，撰写一段专业的命理评语：
 
 【基本信息】
 性别：${genderDesc}
@@ -1674,59 +1839,124 @@
 时柱：${bazi.hourPillar}
 
 【客观统计数据】
-1. 排除日干后的五行统计：${wuxingDesc}
-2. 五行分布：${topDesc}
+1. 五行强弱：${wuxingDesc}
+2. 最旺五行：${topDesc}
 3. 月令情况：${monthDesc}
 4. 印比情况：${yinBiDesc}
 5. 官杀情况：${guanShaDesc}
 6. 财星情况：${caiDesc}
-7. 地支分类：${zhiClassDesc}
+7. 地支特征：${zhiDesc}
 
-【格局判定规则】
-1. 排除日干后，若某五行数量>=4，且全为同一阴阳，为正格；若包含不同阴阳，为混杂格（如官杀混杂）。
-2. 若无四见，看月令藏干本气，若全为同一阴阳为正格，否则为混杂格。
-3. 若日主得月令支持，且全局无官杀，财星数量<=3，判定为专旺格。
-4. 若全局无正偏印和比劫，则看哪个五行数量最多，判定为从格（从儿、从杀或从财）。
+【已判定格局】
+格局：${patternResult.pattern}
+判定依据：${patternResult.reason}
 
 【输出格式要求】
-必须按以下三个步骤输出评语：
+请严格按照以下三个步骤撰写评语：
 
 【第一步：格局总结】
-开篇必须用一句话精准总结用户的命局，格式为：'您是[甲/乙/丙/丁...]木/火/土/金/水日主，属于[XXX]格局。'
+开篇用一句话精准总结命局，格式为：'您是${dayMaster}日主，属于${patternResult.pattern}。'
 
 【第二步：性格与特质评价】
-结合用户的性别、日主五行属性（如甲木的坚韧、丁火的细腻等）以及具体的格局特点，进行深度的性格分析。
+结合性别、日主五行属性以及格局特点，进行深度性格分析。
 
 【第三步：人生机遇与特质分析】
-根据性别和命局特征，分析其人生机遇：
-- 如果是男性，且命局中财星旺盛，请重点分析其财富机遇。
-- 如果是女性，且命局中官杀旺盛，请重点分析其事业机遇。
-- 根据地支分类情况扩展评语：
-  * 若外出类（寅申巳亥）>=2个：扩展外出发展、迁居、异乡闯荡的评语
-  * 若桃花类（子午卯酉）>=2个：扩展桃花运势、异性缘的评语
-  * 若独立类（辰戌丑未）>=2个：扩展独立自主、白手起家的评语
-  * 若均不足2个：给出均衡发展的基础描述
+根据地支特征分析人生机遇：
+- 若地支有外出类特征：分析外出发展、迁居、异乡闯荡的机遇
+- 若地支有桃花类特征：分析感情缘分、异性缘的特点
+- 若地支有独立类特征：分析独立自主、白手起家的特质
+- 若无明显特征：给出均衡发展的建议
 
-要求：语言温暖、通俗易懂、积极向上，总字数控制在 400 字左右。`;
+重要要求：
+- 不要提及任何具体数字（如"多少个"、"几个"），只用定性描述（如"较多"、"旺盛"、"适中"）
+- 语言温暖、通俗易懂、积极向上
+- 总字数控制在 350-400 字`;
 
             return prompt;
         }
 
-        // ========== 获取 AI 评语（Mock 数据，根据统计动态判定格局） ==========
-        async function getAiComment(prompt, stats, gender) {
-            console.log("========== 发送给大模型的 Prompt ==========");
-            console.log(prompt);
-            console.log("========================================");
+        // ========== 获取 AI 评语（通过本地代理服务器） ==========
+        async function getAiComment(prompt, stats, gender, patternResult) {
+            console.log('[AI] 正在通过本地代理调用千问大模型...');
 
-            // TODO: 接入大模型 API 时，将 prompt 发送给接口
-            // const response = await fetch('/api/ai', { method: 'POST', body: JSON.stringify({ prompt }) });
-            // return await response.json();
+            try {
+                const response = await fetch(AI_PROXY_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        systemPrompt: '你是一位精通传统子平八字的资深命理师，擅长根据八字客观数据撰写专业、温暖、通俗易懂的命理评语。'
+                    })
+                });
 
-            // Mock：根据前端统计数据进行简单的格局判定，生成三步结构评语
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`代理请求失败 (${response.status}): ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('[AI] 代理响应：', data);
+
+                // 解析千问的返回格式
+                let aiContent = null;
+
+                // 格式1: 千问标准格式 output.text
+                if (data.output && data.output.text) {
+                    aiContent = data.output.text;
+                }
+                // 格式2: ChatCompletion 格式 output.choices[0].message.content
+                else if (data.output && data.output.choices && data.output.choices.length > 0) {
+                    aiContent = data.output.choices[0].message.content;
+                }
+                // 格式3: 直接在 data.text
+                else if (data.text) {
+                    aiContent = data.text;
+                }
+                // 错误响应
+                else if (data.error || data.message) {
+                    throw new Error(data.message || data.error);
+                }
+
+                if (aiContent) {
+                    console.log('%c[AI] 千问评语生成成功', 'color: green; font-weight: bold;');
+                    console.log(aiContent);
+                    return parseAIResponse(aiContent, stats, gender, patternResult);
+                } else {
+                    console.error('[AI] 无法解析的响应格式：', data);
+                    throw new Error('API 返回格式异常');
+                }
+
+            } catch (error) {
+                console.error('[AI] 代理调用失败：', error.message);
+                if (FALLBACK_TO_MOCK) {
+                    console.warn('[AI] 回退到本地 Mock 数据');
+                    return getMockComment(stats, gender, patternResult);
+                }
+                throw error;
+            }
+        }
+
+        // ========== 解析 AI 返回内容 ==========
+        function parseAIResponse(aiContent, stats, gender, patternResult) {
+            // 使用前端判定的格局（确保一致性）
+            return {
+                pattern: patternResult.pattern,
+                comment: aiContent
+            };
+        }
+
+        // ========== 本地 Mock 评语（API 不可用时的备选） ==========
+        function getMockComment(stats, gender, patternResult) {
             return new Promise(resolve => {
                 setTimeout(() => {
-                    const result = mockDeterminePattern(stats, gender);
-                    resolve(result);
+                    // 使用前端判定的格局生成 Mock 评语
+                    const comment = generateThreeStepComment(patternResult.pattern, stats, gender);
+                    resolve({
+                        pattern: patternResult.pattern,
+                        comment: comment
+                    });
                 }, 300);
             });
         }
@@ -2044,58 +2274,85 @@
                 return;
             }
 
-            // 计算真太阳时
-            const trueSolarTime = calculateTrueSolarTime(year, month, day, hour, minute, longitude);
+            // 设置按钮为 loading 状态
+            const submitBtn = document.getElementById("submitBtn");
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = "正在排盘...";
 
-            // 计算八字排盘
-            const bazi = calculateBazi(
-                trueSolarTime.year,
-                trueSolarTime.month,
-                trueSolarTime.day,
-                trueSolarTime.hour,
-                trueSolarTime.minute
-            );
+            try {
+                // 计算真太阳时
+                const trueSolarTime = calculateTrueSolarTime(year, month, day, hour, minute, longitude);
 
-            // 检查八字是否计算成功
-            if (bazi.yearPillar === "未知") {
-                alert("八字计算失败，请检查网络连接后重试");
-                return;
+                // 计算八字排盘
+                const bazi = calculateBazi(
+                    trueSolarTime.year,
+                    trueSolarTime.month,
+                    trueSolarTime.day,
+                    trueSolarTime.hour,
+                    trueSolarTime.minute
+                );
+
+                // 检查八字是否计算成功
+                if (bazi.yearPillar === "未知") {
+                    alert("八字计算失败，请检查网络连接后重试");
+                    return;
+                }
+
+                // 控制台打印完整数据
+                console.log("========== 格局测试计算结果 ==========");
+                console.log("性别：", gender === "male" ? "男" : "女");
+                console.log("出生地：", `${province} ${city}`);
+                console.log("经度：", longitude);
+                console.log("真太阳时：", `${trueSolarTime.year}年${trueSolarTime.month}月${trueSolarTime.day}日 ${trueSolarTime.hour}:${trueSolarTime.minute}`);
+                console.log("八字排盘：", bazi);
+
+                // 日主信息
+                const dayMasterGan = bazi.dayPillar[0];
+                const dayMasterWuxing = ganWuxing[dayMasterGan];
+                const dayMaster = `${dayMasterGan}${dayMasterWuxing}`;
+
+                // 前端客观统计
+                const stats = collectBaziStats(bazi);
+                console.log("前端客观统计：", stats);
+
+                // 前端格局判定（使用传统子平八字规则）
+                const patternResult = determinePattern(bazi, stats);
+                console.log("格局判定结果：", patternResult);
+
+                // 构造大模型 Prompt（AI 只负责写评语）
+                const prompt = generateBaziAnalysis(bazi, dayMaster, stats, gender, patternResult);
+
+                // 更新按钮文案为 AI 生成中
+                submitBtn.textContent = "AI 正在分析命盘...";
+
+                // 调用千问大模型（或 Mock），使用前端判定的格局
+                const aiResult = await getAiComment(prompt, stats, gender, patternResult);
+                console.log("AI 判定结果：", aiResult);
+                console.log("======================================");
+
+                // 跳转到结果页
+                goToResultPage();
+
+                // 渲染结果页（客观统计 + 格局判定 + AI结果）
+                renderResultPage(bazi, stats, dayMaster, patternResult, aiResult, gender);
+
+            } catch (error) {
+                console.error("计算失败：", error);
+                let errorMsg = "计算过程中出现错误，请重试";
+                if (error.message && (error.message.includes("代理请求失败") || error.message.includes("API 返回格式异常"))) {
+                    errorMsg = "AI 评语生成失败：" + error.message;
+                }
+                alert(errorMsg);
+            } finally {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
-
-            // 控制台打印完整数据
-            console.log("========== 格局测试计算结果 ==========");
-            console.log("性别：", gender === "male" ? "男" : "女");
-            console.log("出生地：", `${province} ${city}`);
-            console.log("经度：", longitude);
-            console.log("真太阳时：", `${trueSolarTime.year}年${trueSolarTime.month}月${trueSolarTime.day}日 ${trueSolarTime.hour}:${trueSolarTime.minute}`);
-            console.log("八字排盘：", bazi);
-
-            // 日主信息
-            const dayMasterGan = bazi.dayPillar[0];
-            const dayMasterWuxing = ganWuxing[dayMasterGan];
-            const dayMaster = `${dayMasterGan}${dayMasterWuxing}`;
-
-            // 前端客观统计
-            const stats = collectBaziStats(bazi);
-            console.log("前端客观统计：", stats);
-
-            // 构造大模型 Prompt
-            const prompt = generateBaziAnalysis(bazi, dayMaster, stats, gender);
-
-            // 调用大模型（目前是 Mock），传入 stats 和 gender 用于格局判定
-            const aiResult = await getAiComment(prompt, stats, gender);
-            console.log("AI 判定结果：", aiResult);
-            console.log("======================================");
-
-            // 跳转到结果页
-            goToResultPage();
-
-            // 渲染结果页（客观统计 + AI结果）
-            renderResultPage(bazi, stats, dayMaster, aiResult, gender);
         }
 
         // ========== 渲染结果页 ==========
-        function renderResultPage(bazi, stats, dayMaster, aiResult, gender) {
+        function renderResultPage(bazi, stats, dayMaster, patternResult, aiResult, gender) {
             // 1. 渲染八字排盘（含藏干）
             const pillarsData = [
                 { label: "年柱", ganZhi: bazi.yearPillar },
@@ -2146,37 +2403,61 @@
             const genderText = gender === "male" ? "男" : "女";
             document.getElementById("genderValue").textContent = genderText;
 
-            // 4. 渲染 AI 判定的格局
-            document.getElementById("patternValue").textContent = aiResult.pattern;
+            // 4. 渲染前端判定的格局
+            document.getElementById("patternValue").textContent = patternResult.pattern;
             const supportText = stats.monthSupport.supported ? "得月令" : "不得月令";
             const yinBiText = stats.yinBiCheck.hasAny ? "有印比" : "无印比";
             document.getElementById("dayMasterInfo").textContent = 
                 `日主：${dayMaster}　|　${supportText}　|　${yinBiText}`;
 
-            // 5. 渲染 AI 评语（三步结构）
+            // 5. 渲染 AI 评语
             const commentContent = aiResult.comment;
-            const steps = commentContent.split('\n\n').filter(s => s.trim());
-            let commentHtml = '';
-            steps.forEach((step, index) => {
-                const lines = step.split('\n').filter(l => l.trim());
-                const titleMatch = lines[0].match(/^【(.+)】(.+)$/);
+            let commentHtml = renderCommentContent(commentContent);
+            document.getElementById("commentContent").innerHTML = commentHtml;
+        }
+
+        // ========== 渲染 AI 评语内容（兼容多种格式） ==========
+        function renderCommentContent(content) {
+            // 去除可能的 markdown 标记
+            let text = content.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+
+            // 尝试按段落分割（双换行或中文句号后跟换行）
+            const paragraphs = text
+                .split(/\n{2,}/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            if (paragraphs.length === 0) {
+                return '';
+            }
+
+            let html = '';
+            paragraphs.forEach((para) => {
+                // 检查是否有 【】 标题格式
+                const titleMatch = para.match(/^【(.+?)】/);
                 if (titleMatch) {
                     const title = titleMatch[1];
-                    const content = titleMatch[2] + (lines.length > 1 ? '\n' + lines.slice(1).join('\n') : '');
-                    commentHtml += `
+                    const body = para.replace(/^【.+?】/, '').trim();
+                    html += `
                         <div class="comment-step">
                             <div class="comment-step-title">${title}</div>
-                            <div class="comment-step-content">${content}</div>
+                            <div class="comment-step-content">${body || ''}</div>
                         </div>
                     `;
                 } else {
-                    commentHtml += `
-                        <div class="comment-step-content">${step}</div>
+                    // 检查是否有编号开头（如 1. 2. 或 一、二、）
+                    const numberedMatch = para.match(/^([一二三四五六七八九十]+[、.．]\s*)?(.+)/s);
+                    const body = numberedMatch ? numberedMatch[0] : para;
+                    html += `
+                        <div class="comment-step">
+                            <div class="comment-step-content">${body}</div>
+                        </div>
                     `;
                 }
             });
-            document.getElementById("commentContent").innerHTML = commentHtml;
+
+            return html;
         }
     </script>
-</body>
-</html>
+
+</body></html>
