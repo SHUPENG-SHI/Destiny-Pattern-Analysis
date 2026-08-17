@@ -660,10 +660,12 @@
 
     <script>
         // ========== AI 代理配置 ==========
-        // 使用相对路径，自动适配当前访问地址（电脑和手机都能正常使用）
+        // 本地服务器 (http://localhost:3002) → 走 AI 评语
+        // GitHub Pages 或 直接双击 HTML → 只用本地写好的评语（稳定可靠）
+        const IS_LOCAL_SERVER = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
         const AI_PROXY_URL = '/api/comment';
-        // 强制使用 AI 评语，不回退到 Mock（如果 AI 失败会显示错误提示）
-        const FALLBACK_TO_MOCK = false;
+        const USE_AI = IS_LOCAL_SERVER;
+        console.log('[评语模式]', USE_AI ? 'AI 智能评语' : '本地规则评语');
 
         // ========== 库加载状态检查 ==========
         // lunar-javascript 库必须正确加载才能计算八字
@@ -1866,66 +1868,62 @@
             return prompt;
         }
 
-        // ========== 获取 AI 评语（通过本地代理服务器） ==========
+        // ========== 获取评语 ==========
         async function getAiComment(prompt, stats, gender, patternResult) {
-            console.log('[AI] 正在通过本地代理调用千问大模型...');
+            // 非本地服务器环境，直接用本地写好的评语
+            if (!USE_AI) {
+                console.log('[评语] 使用本地规则生成评语');
+                return getMockComment(stats, gender, patternResult);
+            }
 
+            // 本地服务器环境，尝试调用 AI
+            console.log('[AI] 正在调用千问大模型...');
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
             try {
                 const response = await fetch(AI_PROXY_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         prompt: prompt,
                         systemPrompt: '你是一位精通传统子平八字的资深命理师，擅长根据八字客观数据撰写专业、温暖、通俗易懂的命理评语。'
-                    })
+                    }),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
+
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`代理请求失败 (${response.status}): ${errorText}`);
+                    throw new Error(`请求失败 (${response.status})`);
                 }
 
                 const data = await response.json();
-                console.log('[AI] 代理响应：', data);
+                console.log('[AI] 响应：', data);
 
-                // 解析千问的返回格式
                 let aiContent = null;
-
-                // 格式1: 千问标准格式 output.text
                 if (data.output && data.output.text) {
                     aiContent = data.output.text;
-                }
-                // 格式2: ChatCompletion 格式 output.choices[0].message.content
-                else if (data.output && data.output.choices && data.output.choices.length > 0) {
+                } else if (data.output && data.output.choices && data.output.choices.length > 0) {
                     aiContent = data.output.choices[0].message.content;
-                }
-                // 格式3: 直接在 data.text
-                else if (data.text) {
+                } else if (data.text) {
                     aiContent = data.text;
-                }
-                // 错误响应
-                else if (data.error || data.message) {
+                } else if (data.error || data.message) {
                     throw new Error(data.message || data.error);
                 }
 
                 if (aiContent) {
-                    console.log('%c[AI] 千问评语生成成功', 'color: green; font-weight: bold;');
-                    console.log(aiContent);
+                    console.log('%c[AI] 评语生成成功', 'color: green; font-weight: bold;');
                     return parseAIResponse(aiContent, stats, gender, patternResult);
                 } else {
-                    console.error('[AI] 无法解析的响应格式：', data);
                     throw new Error('API 返回格式异常');
                 }
 
             } catch (error) {
-                console.error('[AI] 代理调用失败：', error.message);
-                if (FALLBACK_TO_MOCK) {
-                    console.warn('[AI] 回退到本地 Mock 数据');
-                    return getMockComment(stats, gender, patternResult);
-                }
-                throw error;
+                clearTimeout(timeoutId);
+                console.warn('[AI] 调用失败，回退到本地评语：', error.message);
+                return getMockComment(stats, gender, patternResult);
             }
         }
 
