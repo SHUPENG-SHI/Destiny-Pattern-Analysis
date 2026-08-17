@@ -671,8 +671,8 @@
             ? 'https://1-alpha-ecru-95.vercel.app/api/comment'
             : '/api/comment';
         console.log('[AI] 代理模式：', USE_REMOTE_PROXY ? 'Vercel 远程代理' : '本地 Node 代理', '→', AI_PROXY_URL);
-        // 强制使用 AI 评语，不回退到 Mock（如果 AI 失败会显示错误提示）
-        const FALLBACK_TO_MOCK = false;
+        // AI 请求失败时自动回退到本地评语（保证能用）
+        const FALLBACK_TO_MOCK = true;
 
         // ========== 库加载状态检查 ==========
         // lunar-javascript 库必须正确加载才能计算八字
@@ -1877,8 +1877,12 @@
 
         // ========== 获取 AI 评语（通过本地代理服务器） ==========
         async function getAiComment(prompt, stats, gender, patternResult) {
-            console.log('[AI] 正在通过本地代理调用千问大模型...');
-
+            console.log('[AI] 正在通过代理调用千问大模型...');
+            
+            // 创建超时控制器，30秒后自动中止请求
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+            
             try {
                 const response = await fetch(AI_PROXY_URL, {
                     method: 'POST',
@@ -1888,12 +1892,16 @@
                     body: JSON.stringify({
                         prompt: prompt,
                         systemPrompt: '你是一位精通传统子平八字的资深命理师，擅长根据八字客观数据撰写专业、温暖、通俗易懂的命理评语。'
-                    })
+                    }),
+                    signal: controller.signal // 绑定超时信号
                 });
+
+                // 清除超时定时器
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`代理请求失败 (${response.status}): ${errorText}`);
+                    throw new Error(`代理请求失败 (${response.status})：服务器返回错误`);
                 }
 
                 const data = await response.json();
@@ -1929,11 +1937,22 @@
                 }
 
             } catch (error) {
+                // 清除超时定时器
+                clearTimeout(timeoutId);
+                
                 console.error('[AI] 代理调用失败：', error.message);
+                
+                // 所有错误都回退到本地评语（保证能用）
                 if (FALLBACK_TO_MOCK) {
                     console.warn('[AI] 回退到本地 Mock 数据');
                     return getMockComment(stats, gender, patternResult);
                 }
+                
+                // 超时错误提示
+                if (error.name === 'AbortError') {
+                    throw new Error('AI 评语生成超时（30秒），请检查网络连接后重试');
+                }
+                
                 throw error;
             }
         }
