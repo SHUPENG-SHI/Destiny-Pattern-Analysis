@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>命理格局测试</title>
@@ -588,7 +587,7 @@
                 <label>性别</label>
                 <div class="gender-group">
                     <div class="gender-option">
-                        <input type="radio" id="gender-male" name="gender" value="male" checked>
+                        <input type="radio" id="gender-male" name="gender" value="male" checked="">
                         <label for="gender-male">男</label>
                     </div>
                     <div class="gender-option">
@@ -661,11 +660,10 @@
 
     <script>
         // ========== AI 代理配置 ==========
-        // 本地代理服务器地址（通过 server.js 启动）
-        // API Key 保存在服务端，前端无法获取，防止盗用
-        const AI_PROXY_URL = 'http://localhost:3000/api/comment';
-        // 若本地代理不可用，是否回退到 Mock 数据
-        const FALLBACK_TO_MOCK = true;
+        // 使用相对路径，自动适配当前访问地址（电脑和手机都能正常使用）
+        const AI_PROXY_URL = '/api/comment';
+        // 强制使用 AI 评语，不回退到 Mock（如果 AI 失败会显示错误提示）
+        const FALLBACK_TO_MOCK = false;
 
         // ========== 库加载状态检查 ==========
         // lunar-javascript 库必须正确加载才能计算八字
@@ -2332,7 +2330,11 @@
 
             } catch (error) {
                 console.error("计算失败：", error);
-                alert("计算过程中出现错误，请重试");
+                let errorMsg = "计算过程中出现错误，请重试";
+                if (error.message && (error.message.includes("代理请求失败") || error.message.includes("API 返回格式异常"))) {
+                    errorMsg = "AI 评语生成失败：" + error.message;
+                }
+                alert(errorMsg);
             } finally {
                 // 恢复按钮状态
                 submitBtn.disabled = false;
@@ -2448,5 +2450,5 @@
             return html;
         }
     </script>
-</body>
-</html>
+
+</body></html>
