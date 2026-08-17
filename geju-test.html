@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>命理格局测试</title>
+    <!-- 引入 lunar-javascript 干支历法库（CDN） -->
+    <script src="https://unpkg.com/lunar-javascript@1.6.12/lunar.js"></script>
+    <style>
+        /* ========== 新中式极简风 - 全局样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(160deg, #F7F9FC 0%, #EDF2F7 100%);
+            color: #3A4A5C;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        /* 页面容器 */
+        .page {
+            width: 100%;
+            max-width: 520px;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        /* 页面切换动画 */
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== 标题样式 ========== */
+        h1 {
+            font-family: 'Songti SC', 'SimSun', serif;
+            font-size: 3rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            margin-bottom: 48px;
+            color: #3A4A5C;
+            text-shadow: 0 2px 8px rgba(58, 74, 92, 0.06);
+        }
+
+        h2 {
+            font-family: 'Songti SC', 'SimSun', serif;
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 32px;
+            color: #4A5A6C;
+            letter-spacing: 3px;
+        }
+
+        /* ========== 按钮样式 ========== */
+        .btn {
+            display: inline-block;
+            padding: 14px 48px;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #3A4A5C;
+            background: linear-gradient(135deg, #ffffff 0%, #F0F4F8 100%);
+            border: 1px solid #5C6E80;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(58, 74, 92, 0.06);
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #5C6E80 0%, #4A5A6C 100%);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(58, 74, 92, 0.15);
+        }
+
+        .btn-submit {
+            margin-top: 24px;
+            padding: 14px 56px;
+            width: 100%;
+        }
+
+        /* ========== 表单样式 ========== */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #5C6E80;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        /* 表单控件统一样式 */
+        select,
+        input[type="time"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 0.9375rem;
+            color: #3A4A5C;
+            background-color: #ffffff;
+            border: 1px solid #D5DCE3;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235C6E80' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+
+        select:hover,
+        input[type="time"]:hover,
+        select:focus,
+        input[type="time"]:focus {
+            border-color: #5C6E80;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(92, 110, 128, 0.08);
+        }
+
+        /* 日期时间行布局 */
+        .datetime-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .datetime-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* ========== 卡片容器样式 ========== */
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(58, 74, 92, 0.06);
+            margin-bottom: 20px;
+        }
+
+        /* 结果展示区样式 */
+        .result-area {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            font-size: 0.9375rem;
+        }
+
+        .result-label {
+            color: #7A8C9E;
+            letter-spacing: 1px;
+        }
+
+        .result-value {
+            color: #3A4A5C;
+            font-weight: 500;
+        }
+
+        .result-divider {
+            height: 1px;
+            background-color: #E6EBF0;
+            margin: 8px 0;
+        }
+
+        .result-highlight .result-label,
+        .result-highlight .result-value {
+            font-size: 1rem;
+        }
+
+        .result-highlight .result-value {
+            color: #3A4A5C;
+            font-weight: 600;
+        }
+
+        .result-shichen {
+            font-size: 1.125rem !important;
+            letter-spacing: 2px;
+        }
+
+        /* ========== 八字排盘展示区样式 ========== */
+        .bazi-area {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .bazi-title {
+            font-family: 'Songti SC', 'SimSun', serif;
+            font-size: 1rem;
+            color: #4A5A6C;
+            margin-bottom: 24px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .bazi-pillars {
+            display: flex;
+            justify-content: space-around;
+            gap: 12px;
+        }
+
+        .bazi-pillar {
+            flex: 1;
+            text-align: center;
+            padding: 18px 8px;
+            border: 1px solid #E6EBF0;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #FAFBFD 0%, #F2F5F9 100%);
+        }
+
+        .bazi-pillar-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #7A8C9E;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .bazi-pillar-ganzhi {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            font-family: 'Songti SC', 'SimSun', serif;
+            font-weight: 600;
+            color: #3A4A5C;
+            letter-spacing: 2px;
+        }
+
+        .bazi-pillar-gan {
+            font-size: 1.75rem;
+            line-height: 1.2;
+        }
+
+        .bazi-pillar-zhi {
+            font-size: 1.75rem;
+            line-height: 1.2;
+        }
+
+        .bazi-pillar-hidden {
+            display: block;
+            font-size: 0.8125rem;
+            color: #7A8C9E;
+            margin-top: 12px;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        .bazi-pillar-hidden-title {
+            display: block;
+            font-size: 0.6875rem;
+            color: #9BA8B5;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ========== 格局判断展示区 ========== */
+        .pattern-area {
+            text-align: center;
+        }
+
+        .pattern-label {
+            font-size: 0.8125rem;
+            color: #7A8C9E;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .pattern-value {
+            font-family: 'Songti SC', 'SimSun', serif;
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: #3A4A5C;
+            letter-spacing: 4px;
+            text-shadow: 0 2px 8px rgba(58, 74, 92, 0.06);
+        }
+
+        /* 日主展示 */
+        .day-master {
+            font-size: 0.875rem;
+            color: #7A8C9E;
+            margin-top: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* ========== AI 评语区 ========== */
+        .comment-area {
+            text-align: left;
+        }
+
+        .comment-title {
+            font-family: 'Songti SC', 'SimSun', serif;
+            font-size: 1.25rem;
+            color: #4A5A6C;
+            letter-spacing: 3px;
+            margin-bottom: 24px;
+            text-align: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #E6EBF0;
+        }
+
+        .comment-content {
+            font-size: 1rem;
+            color: #3A4A5C;
+            line-height: 1.8;
+            letter-spacing: 0.5px;
+            text-align: justify;
+            white-space: pre-wrap;
+        }
+
+        /* 三步结构评语样式 */
+        .comment-step {
+            margin-bottom: 24px;
+            padding-left: 14px;
+            border-left: 3px solid #5C6E80;
+        }
+
+        .comment-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .comment-step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #3A4A5C;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .comment-step-content {
+            font-size: 1rem;
+            color: #4A5A6C;
+            line-height: 1.8;
+        }
+
+        /* ========== 返回按钮 ========== */
+        .btn-back {
+            margin-top: 32px;
+            font-size: 0.875rem;
+            color: #7A8C9E;
+            background: none;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            padding: 8px 20px;
+            border-radius: 6px;
+        }
+
+        .btn-back:hover {
+            color: #3A4A5C;
+            background-color: rgba(58, 74, 92, 0.04);
+        }
+
+        /* ========== 五行统计条 ========== */
+        .wuxing-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 16px;
+            background: linear-gradient(135deg, #F7F9FC 0%, #EFF2F7 100%);
+            border-radius: 10px;
+        }
+
+        .wuxing-item {
+            text-align: center;
+        }
+
+        .wuxing-name {
+            display: block;
+            font-size: 0.8125rem;
+            color: #7A8C9E;
+            margin-bottom: 4px;
+        }
+
+        .wuxing-count {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #3A4A5C;
+        }
+
+        /* 五行颜色 */
+        .wuxing-metal { color: #B8944F; }
+        .wuxing-wood { color: #4A8B5C; }
+        .wuxing-water { color: #3B7AA8; }
+        .wuxing-fire { color: #C05A4A; }
+        .wuxing-earth { color: #9B7A3F; }
+
+        /* ========== 性别选择样式 ========== */
+        .gender-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .gender-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .gender-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .gender-option label {
+            display: block;
+            text-align: center;
+            padding: 12px 16px;
+            font-size: 0.9375rem;
+            color: #7A8C9E;
+            background-color: #ffffff;
+            border: 1px solid #D5DCE3;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+            letter-spacing: 2px;
+        }
+
+        .gender-option input[type="radio"]:checked + label {
+            border-color: #5C6E80;
+            color: #3A4A5C;
+            background: linear-gradient(135deg, #F0F4F8 0%, #EDF2F7 100%);
+            font-weight: 500;
+        }
+
+        .gender-option label:hover {
+            border-color: #5C6E80;
+        }
+
+        /* ========== 响应式适配 ========== */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 16px;
+            }
+
+            .page {
+                padding: 24px 16px;
+            }
+
+            h1 {
+                font-size: 2.25rem;
+                letter-spacing: 3px;
+                margin-bottom: 36px;
+            }
+
+            h2 {
+                font-size: 1.625rem;
+                letter-spacing: 2px;
+                margin-bottom: 24px;
+            }
+
+            .card {
+                padding: 20px 16px;
+                border-radius: 10px;
+            }
+
+            .bazi-pillar {
+                padding: 14px 6px;
+            }
+
+            .bazi-pillar-gan,
+            .bazi-pillar-zhi {
+                font-size: 1.5rem;
+            }
+
+            .comment-content {
+                font-size: 0.9375rem;
+            }
+
+            .comment-step-content {
+                font-size: 0.9375rem;
+            }
+
+            .pattern-value {
+                font-size: 1.5rem;
+            }
+
+            .comment-title {
+                font-size: 1.125rem;
+            }
+
+            .wuxing-bar {
+                padding: 12px 8px;
+            }
+
+            .wuxing-count {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 页面一：欢迎页 -->
+    <div id="welcomePage" class="page">
+        <h1>命理格局测试</h1>
+        <button class="btn" onclick="goToTestPage()">开始测算</button>
+    </div>
+
+    <!-- 页面二：测试页 -->
+    <div id="testPage" class="page hidden">
+        <h2>请输入您的出生信息</h2>
+        <div class="card">
+            <form id="birthForm" onsubmit="submitForm(event)">
+            
+            <!-- 年份 -->
+            <div class="form-group">
+                <label for="year">年份</label>
+                <select id="year" name="year"></select>
+            </div>
+
+            <!-- 月份 -->
+            <div class="form-group">
+                <label for="month">月份</label>
+                <select id="month" name="month" onchange="updateDays()"></select>
+            </div>
+
+            <!-- 日期和时间 -->
+            <div class="datetime-row">
+                <div class="form-group">
+                    <label for="day">日期</label>
+                    <select id="day" name="day"></select>
+                </div>
+                <div class="form-group">
+                    <label for="time">出生时间</label>
+                    <input type="time" id="time" name="time">
+                </div>
+            </div>
+
+            <!-- 省份 -->
+            <div class="form-group">
+                <label for="province">省份</label>
+                <select id="province" name="province" onchange="updateCities()">
+                    <option value="">请选择省份</option>
+                </select>
+            </div>
+
+            <!-- 地级市 -->
+            <div class="form-group">
+                <label for="city">地级市</label>
+                <select id="city" name="city">
+                    <option value="">请先选择省份</option>
+                </select>
+            </div>
+
+            <!-- 性别 -->
+            <div class="form-group">
+                <label>性别</label>
+                <div class="gender-group">
+                    <div class="gender-option">
+                        <input type="radio" id="gender-male" name="gender" value="male" checked>
+                        <label for="gender-male">男</label>
+                    </div>
+                    <div class="gender-option">
+                        <input type="radio" id="gender-female" name="gender" value="female">
+                        <label for="gender-female">女</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-submit">开始测算</button>
+            </form>
+        </div>
+
+        <!-- 计算结果展示区 -->
+        <div id="resultArea" class="card result-area hidden">
+        </div>
+
+        <!-- 八字排盘结果展示区 -->
+        <div id="baziArea" class="card bazi-area hidden">
+        </div>
+    </div>
+
+    <!-- 页面三：结果页 -->
+    <div id="resultPage" class="page hidden">
+        <h2>格局分析</h2>
+
+        <!-- 八字排盘展示（含藏干） -->
+        <div class="card">
+            <div id="resultBaziArea" class="bazi-area">
+                <div class="bazi-title">八字排盘</div>
+                <div id="resultPillars" class="bazi-pillars"></div>
+            </div>
+        </div>
+
+        <!-- 五行统计 -->
+        <div class="card">
+            <div id="wuxingArea" class="wuxing-bar"></div>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="card">
+            <div id="infoArea" class="result-area">
+                <div class="result-item">
+                    <span class="result-label">性别</span>
+                    <span id="genderValue" class="result-value"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 格局判断 -->
+        <div class="card">
+            <div id="patternArea" class="pattern-area">
+                <div class="pattern-label">您的格局</div>
+                <div id="patternValue" class="pattern-value"></div>
+                <div id="dayMasterInfo" class="day-master"></div>
+            </div>
+        </div>
+
+        <!-- AI 评语 -->
+        <div class="card">
+            <div id="commentArea" class="comment-area">
+                <div class="comment-title">命理师点评</div>
+                <div id="commentContent" class="comment-content"></div>
+            </div>
+        </div>
+
+        <!-- 返回按钮 -->
+        <button class="btn-back" onclick="goToTestPage()">重新测试</button>
+    </div>
+
+    <script>
+        // ========== AI 代理配置 ==========
+        // 本地代理服务器地址（通过 server.js 启动）
+        // API Key 保存在服务端，前端无法获取，防止盗用
+        const AI_PROXY_URL = 'http://localhost:3000/api/comment';
+        // 若本地代理不可用，是否回退到 Mock 数据
+        const FALLBACK_TO_MOCK = true;
+
+        // ========== 库加载状态检查 ==========
+        // lunar-javascript 库必须正确加载才能计算八字
+        window.addEventListener('load', function() {
+            const libLoaded = typeof Solar !== 'undefined';
+            if (libLoaded) {
+                console.log('%c[格局测试] lunar-javascript 库加载成功', 'color: green; font-weight: bold;');
+            } else {
+                console.error('[格局测试] lunar-javascript 库加载失败，八字排盘功能不可用');
+                console.error('请检查网络连接，或手动下载 lunar.js 放到本地');
+            }
+        });
+
+        // ========== 省市联动数据（中国34个省级行政区及地级市） ==========
+        const cityData = {
+            // 直辖市
+            "北京市": ["东城区", "西城区", "朝阳区", "海淀区", "丰台区", "石景山区", "通州区", "昌平区", "大兴区", "顺义区", "房山区", "门头沟区", "平谷区", "怀柔区", "密云区", "延庆区"],
+            "天津市": ["和平区", "河东区", "河西区", "南开区", "河北区", "红桥区", "东丽区", "西青区", "津南区", "北辰区", "武清区", "宝坻区", "滨海新区", "宁河区", "静海区", "蓟州区"],
+            "上海市": ["黄浦区", "徐汇区", "长宁区", "静安区", "普陀区", "虹口区", "杨浦区", "浦东新区", "闵行区", "宝山区", "嘉定区", "金山区", "松江区", "青浦区", "奉贤区", "崇明区"],
+            "重庆市": ["渝中区", "江北区", "沙坪坝区", "九龙坡区", "南岸区", "北碚区", "渝北区", "巴南区", "万州区", "涪陵区", "黔江区", "长寿区", "江津区", "合川区", "永川区"],
+            
+            // 河北省
+            "河北省": ["石家庄市", "唐山市", "秦皇岛市", "邯郸市", "邢台市", "保定市", "张家口市", "承德市", "沧州市", "廊坊市", "衡水市"],
+            
+            // 山西省
+            "山西省": ["太原市", "大同市", "阳泉市", "长治市", "晋城市", "朔州市", "晋中市", "运城市", "忻州市", "临汾市", "吕梁市"],
+            
+            // 内蒙古自治区
+            "内蒙古自治区": ["呼和浩特市", "包头市", "乌海市", "赤峰市", "通辽市", "鄂尔多斯市", "呼伦贝尔市", "巴彦淖尔市", "乌兰察布市", "兴安盟", "锡林郭勒盟", "阿拉善盟"],
+            
+            // 辽宁省
+            "辽宁省": ["沈阳市", "大连市", "鞍山市", "抚顺市", "本溪市", "丹东市", "锦州市", "营口市", "阜新市", "辽阳市", "盘锦市", "铁岭市", "朝阳市", "葫芦岛市"],
+            
+            // 吉林省
+            "吉林省": ["长春市", "吉林市", "四平市", "辽源市", "通化市", "白山市", "松原市", "白城市", "延边朝鲜族自治州"],
+            
+            // 黑龙江省
+            "黑龙江省": ["哈尔滨市", "齐齐哈尔市", "鸡西市", "鹤岗市", "双鸭山市", "大庆市", "伊春市", "佳木斯市", "七台河市", "牡丹江市", "黑河市", "绥化市", "大兴安岭地区"],
+            
+            // 江苏省
+            "江苏省": ["南京市", "苏州市", "无锡市", "常州市", "徐州市", "南通市", "连云港市", "淮安市", "盐城市", "扬州市", "镇江市", "泰州市", "宿迁市"],
+            
+            // 浙江省
+            "浙江省": ["杭州市", "宁波市", "温州市", "嘉兴市", "湖州市", "绍兴市", "金华市", "衢州市", "舟山市", "台州市", "丽水市"],
+            
+            // 安徽省
+            "安徽省": ["合肥市", "芜湖市", "蚌埠市", "淮南市", "马鞍山市", "淮北市", "铜陵市", "安庆市", "黄山市", "滁州市", "阜阳市", "宿州市", "六安市", "亳州市", "池州市", "宣城市"],
+            
+            // 福建省
+            "福建省": ["福州市", "厦门市", "莆田市", "三明市", "泉州市", "漳州市", "南平市", "龙岩市", "宁德市"],
+            
+            // 江西省
+            "江西省": ["南昌市", "景德镇市", "萍乡市", "九江市", "新余市", "鹰潭市", "赣州市", "吉安市", "宜春市", "抚州市", "上饶市"],
+            
+            // 山东省
+            "山东省": ["济南市", "青岛市", "淄博市", "枣庄市", "东营市", "烟台市", "潍坊市", "济宁市", "泰安市", "威海市", "日照市", "临沂市", "德州市", "聊城市", "滨州市", "菏泽市"],
+            
+            // 河南省
+            "河南省": ["郑州市", "开封市", "洛阳市", "平顶山市", "安阳市", "鹤壁市", "新乡市", "焦作市", "濮阳市", "许昌市", "漯河市", "三门峡市", "南阳市", "商丘市", "信阳市", "周口市", "驻马店市"],
+            
+            // 湖北省
+            "湖北省": ["武汉市", "黄石市", "十堰市", "宜昌市", "襄阳市", "鄂州市", "荆门市", "孝感市", "荆州市", "黄冈市", "咸宁市", "随州市", "恩施土家族苗族自治州"],
+            
+            // 湖南省
+            "湖南省": ["长沙市", "株洲市", "湘潭市", "衡阳市", "邵阳市", "岳阳市", "常德市", "张家界市", "益阳市", "郴州市", "永州市", "怀化市", "娄底市", "湘西土家族苗族自治州"],
+            
+            // 广东省
+            "广东省": ["广州市", "深圳市", "珠海市", "汕头市", "佛山市", "韶关市", "湛江市", "肇庆市", "江门市", "茂名市", "惠州市", "梅州市", "汕尾市", "河源市", "阳江市", "清远市", "东莞市", "中山市", "潮州市", "揭阳市", "云浮市"],
+            
+            // 广西壮族自治区
+            "广西壮族自治区": ["南宁市", "柳州市", "桂林市", "梧州市", "北海市", "防城港市", "钦州市", "贵港市", "玉林市", "百色市", "贺州市", "河池市", "来宾市", "崇左市"],
+            
+            // 海南省
+            "海南省": ["海口市", "三亚市", "三沙市", "儋州市", "五指山市", "琼海市", "文昌市", "万宁市", "东方市"],
+            
+            // 四川省
+            "四川省": ["成都市", "自贡市", "攀枝花市", "泸州市", "德阳市", "绵阳市", "广元市", "遂宁市", "内江市", "乐山市", "南充市", "眉山市", "宜宾市", "广安市", "达州市", "雅安市", "巴中市", "资阳市", "阿坝藏族羌族自治州", "甘孜藏族自治州", "凉山彝族自治州"],
+            
+            // 贵州省
+            "贵州省": ["贵阳市", "六盘水市", "遵义市", "安顺市", "毕节市", "铜仁市", "黔西南布依族苗族自治州", "黔东南苗族侗族自治州", "黔南布依族苗族自治州"],
+            
+            // 云南省
+            "云南省": ["昆明市", "曲靖市", "玉溪市", "保山市", "昭通市", "丽江市", "普洱市", "临沧市", "楚雄彝族自治州", "红河哈尼族彝族自治州", "文山壮族苗族自治州", "西双版纳傣族自治州", "大理白族自治州", "德宏傣族景颇族自治州", "怒江傈僳族自治州", "迪庆藏族自治州"],
+            
+            // 西藏自治区
+            "西藏自治区": ["拉萨市", "日喀则市", "昌都市", "林芝市", "山南市", "那曲市", "阿里地区"],
+            
+            // 陕西省
+            "陕西省": ["西安市", "铜川市", "宝鸡市", "咸阳市", "渭南市", "延安市", "汉中市", "榆林市", "安康市", "商洛市"],
+            
+            // 甘肃省
+            "甘肃省": ["兰州市", "嘉峪关市", "金昌市", "白银市", "天水市", "武威市", "张掖市", "平凉市", "酒泉市", "庆阳市", "定西市", "陇南市", "临夏回族自治州", "甘南藏族自治州"],
+            
+            // 青海省
+            "青海省": ["西宁市", "海东市", "海北藏族自治州", "黄南藏族自治州", "海南藏族自治州", "果洛藏族自治州", "玉树藏族自治州", "海西蒙古族藏族自治州"],
+            
+            // 宁夏回族自治区
+            "宁夏回族自治区": ["银川市", "石嘴山市", "吴忠市", "固原市", "中卫市"],
+            
+            // 新疆维吾尔自治区
+            "新疆维吾尔自治区": ["乌鲁木齐市", "克拉玛依市", "吐鲁番市", "哈密市", "昌吉回族自治州", "博尔塔拉蒙古自治州", "巴音郭楞蒙古自治州", "阿克苏地区", "克孜勒苏柯尔克孜自治州", "喀什地区", "和田地区", "伊犁哈萨克自治州", "塔城地区", "阿勒泰地区"],
+            
+            // 特别行政区
+            "香港特别行政区": ["中西区", "湾仔区", "东区", "南区", "油尖旺区", "深水埗区", "九龙城区", "黄大仙区", "观塘区", "荃湾区", "屯门区", "元朗区", "北区", "大埔区", "西贡区", "沙田区", "葵青区", "离岛区"],
+            "澳门特别行政区": ["花地玛堂区", "花王堂区", "望德堂区", "大堂区", "风顺堂区", "嘉模堂区", "路凼填海区", "圣方济各堂区"],
+            
+            // 台湾省
+            "台湾省": ["台北市", "新北市", "桃园市", "台中市", "台南市", "高雄市", "基隆市", "新竹市", "嘉义市", "宜兰县", "新竹县", "苗栗县", "彰化县", "南投县", "云林县", "嘉义县", "屏东县", "台东县", "花莲县", "澎湖县", "金门县", "连江县"]
+        };
+
+        // ========== 城市经度数据（用于真太阳时计算） ==========
+        // 格式：城市名 → 经度（东经为正）
+        // 直辖市的区县统一使用市政府所在地经度
+        const cityLongitude = {
+            // 直辖市
+            "北京市": 116.4074, "天津市": 117.2010, "上海市": 121.4737, "重庆市": 106.5516,
+            // 北京市区县（统一使用北京坐标）
+            "东城区": 116.4074, "西城区": 116.4074, "朝阳区": 116.4074, "海淀区": 116.4074,
+            "丰台区": 116.4074, "石景山区": 116.4074, "通州区": 116.4074, "昌平区": 116.4074,
+            "大兴区": 116.4074, "顺义区": 116.4074, "房山区": 116.4074, "门头沟区": 116.4074,
+            "平谷区": 116.4074, "怀柔区": 116.4074, "密云区": 116.4074, "延庆区": 116.4074,
+            // 天津市区县（统一使用天津坐标）
+            "和平区": 117.2010, "河东区": 117.2010, "河西区": 117.2010, "南开区": 117.2010,
+            "河北区": 117.2010, "红桥区": 117.2010, "东丽区": 117.2010, "西青区": 117.2010,
+            "津南区": 117.2010, "北辰区": 117.2010, "武清区": 117.2010, "宝坻区": 117.2010,
+            "滨海新区": 117.2010, "宁河区": 117.2010, "静海区": 117.2010, "蓟州区": 117.2010,
+            // 上海市区县（统一使用上海坐标）
+            "黄浦区": 121.4737, "徐汇区": 121.4737, "长宁区": 121.4737, "静安区": 121.4737,
+            "普陀区": 121.4737, "虹口区": 121.4737, "杨浦区": 121.4737, "浦东新区": 121.4737,
+            "闵行区": 121.4737, "宝山区": 121.4737, "嘉定区": 121.4737, "金山区": 121.4737,
+            "松江区": 121.4737, "青浦区": 121.4737, "奉贤区": 121.4737, "崇明区": 121.4737,
+            // 重庆市区县（统一使用重庆坐标）
+            "渝中区": 106.5516, "江北区": 106.5516, "沙坪坝区": 106.5516, "九龙坡区": 106.5516,
+            "南岸区": 106.5516, "北碚区": 106.5516, "渝北区": 106.5516, "巴南区": 106.5516,
+            "万州区": 106.5516, "涪陵区": 106.5516, "黔江区": 106.5516, "长寿区": 106.5516,
+            "江津区": 106.5516, "合川区": 106.5516, "永川区": 106.5516,
+            // 河北省
+            "石家庄市": 114.5149, "唐山市": 118.1802, "秦皇岛市": 119.5980, "邯郸市": 114.5391,
+            "邢台市": 114.4857, "保定市": 115.4646, "张家口市": 114.8865, "承德市": 117.9314,
+            "沧州市": 116.8639, "廊坊市": 116.6839, "衡水市": 115.6701,
+            // 山西省
+            "太原市": 112.5489, "大同市": 113.2910, "阳泉市": 113.5830, "长治市": 113.1290,
+            "晋城市": 112.8565, "朔州市": 112.4200, "晋中市": 112.7545, "运城市": 111.0100,
+            "忻州市": 112.7355, "临汾市": 111.5189, "吕梁市": 111.1430,
+            // 内蒙古自治区
+            "呼和浩特市": 111.7510, "包头市": 109.8403, "乌海市": 106.7943, "赤峰市": 118.8870,
+            "通辽市": 122.2657, "鄂尔多斯市": 109.7820, "呼伦贝尔市": 119.7720,
+            "巴彦淖尔市": 107.3880, "乌兰察布市": 113.1330, "兴安盟": 122.0700,
+            "锡林郭勒盟": 115.0800, "阿拉善盟": 105.7390,
+            // 辽宁省
+            "沈阳市": 123.4315, "大连市": 121.6147, "鞍山市": 122.9957, "抚顺市": 123.9574,
+            "本溪市": 123.7750, "丹东市": 124.3530, "锦州市": 121.1270, "营口市": 122.2350,
+            "阜新市": 121.6720, "辽阳市": 123.2430, "盘锦市": 122.0700, "铁岭市": 123.8440,
+            "朝阳市": 120.4570, "葫芦岛市": 120.8430,
+            // 吉林省
+            "长春市": 125.3245, "吉林市": 126.5530, "四平市": 124.3490, "辽源市": 125.1430,
+            "通化市": 125.9390, "白山市": 126.4270, "松原市": 124.8270, "白城市": 122.8440,
+            "延边朝鲜族自治州": 129.5130,
+            // 黑龙江省
+            "哈尔滨市": 126.5349, "齐齐哈尔市": 123.9540, "鸡西市": 130.9690, "鹤岗市": 130.2970,
+            "双鸭山市": 131.1570, "大庆市": 125.1040, "伊春市": 128.9000, "佳木斯市": 130.3230,
+            "七台河市": 131.0030, "牡丹江市": 129.5930, "黑河市": 127.5490, "绥化市": 126.9870,
+            "大兴安岭地区": 124.7110,
+            // 江苏省
+            "南京市": 118.7969, "苏州市": 120.5853, "无锡市": 120.3119, "常州市": 119.9741,
+            "徐州市": 117.1840, "南通市": 120.8647, "连云港市": 119.1870, "淮安市": 119.0210,
+            "盐城市": 120.1610, "扬州市": 119.4210, "镇江市": 119.4540, "泰州市": 119.9230,
+            "宿迁市": 118.2750,
+            // 浙江省
+            "杭州市": 120.1551, "宁波市": 121.5498, "温州市": 120.6994, "嘉兴市": 120.7555,
+            "湖州市": 120.0950, "绍兴市": 120.5820, "金华市": 119.6470, "衢州市": 118.8700,
+            "舟山市": 122.1060, "台州市": 121.4200, "丽水市": 119.9220,
+            // 安徽省
+            "合肥市": 117.2272, "芜湖市": 118.4330, "蚌埠市": 117.3880, "淮南市": 117.0180,
+            "马鞍山市": 118.5060, "淮北市": 116.7930, "铜陵市": 117.8120, "安庆市": 117.0610,
+            "黄山市": 118.3380, "滁州市": 118.3170, "阜阳市": 115.8140, "宿州市": 117.1840,
+            "六安市": 116.5060, "亳州市": 115.7780, "池州市": 117.4910, "宣城市": 118.7580,
+            // 福建省
+            "福州市": 119.2965, "厦门市": 118.0894, "莆田市": 119.0070, "三明市": 117.6380,
+            "泉州市": 118.5890, "漳州市": 117.6470, "南平市": 118.1770, "龙岩市": 117.0290,
+            "宁德市": 119.5380,
+            // 江西省
+            "南昌市": 115.8581, "景德镇市": 117.1780, "萍乡市": 113.8550, "九江市": 116.0020,
+            "新余市": 114.9170, "鹰潭市": 117.0370, "赣州市": 114.9400, "吉安市": 114.9950,
+            "宜春市": 114.3940, "抚州市": 116.3580, "上饶市": 117.9730,
+            // 山东省
+            "济南市": 117.1201, "青岛市": 120.3826, "淄博市": 118.0548, "枣庄市": 117.3230,
+            "东营市": 118.6970, "烟台市": 121.4540, "潍坊市": 119.1070, "济宁市": 116.5870,
+            "泰安市": 117.0970, "威海市": 122.1210, "日照市": 119.5270, "临沂市": 118.3560,
+            "德州市": 116.3580, "聊城市": 115.9850, "滨州市": 117.9710, "菏泽市": 115.4800,
+            // 河南省
+            "郑州市": 113.6253, "开封市": 114.3080, "洛阳市": 112.4540, "平顶山市": 113.1880,
+            "安阳市": 114.3520, "鹤壁市": 114.2970, "新乡市": 113.8830, "焦作市": 113.2420,
+            "濮阳市": 115.0290, "许昌市": 113.8520, "漯河市": 114.0170, "三门峡市": 111.2000,
+            "南阳市": 112.5280, "商丘市": 115.6560, "信阳市": 114.0670, "周口市": 114.6490,
+            "驻马店市": 114.0220,
+            // 湖北省
+            "武汉市": 114.3055, "黄石市": 115.0770, "十堰市": 110.7980, "宜昌市": 111.2860,
+            "襄阳市": 112.1440, "鄂州市": 114.8940, "荆门市": 112.2040, "孝感市": 113.9270,
+            "荆州市": 112.2390, "黄冈市": 114.8720, "咸宁市": 114.3220, "随州市": 113.3830,
+            "恩施土家族苗族自治州": 109.4860, "仙桃市": 113.4430, "潜江市": 112.8930,
+            "天门市": 113.1660, "神农架林区": 110.4890,
+            // 湖南省
+            "长沙市": 112.9389, "株洲市": 113.1340, "湘潭市": 112.9440, "衡阳市": 112.5720,
+            "邵阳市": 111.4740, "岳阳市": 113.1290, "常德市": 111.6980, "张家界市": 110.4790,
+            "益阳市": 112.3890, "郴州市": 113.0170, "永州市": 111.6130, "怀化市": 110.0030,
+            "娄底市": 111.9940, "湘西土家族苗族自治州": 109.7390,
+            // 广东省
+            "广州市": 113.2644, "深圳市": 114.0579, "珠海市": 113.5767, "汕头市": 116.6820,
+            "佛山市": 113.1219, "韶关市": 113.5970, "湛江市": 110.3590, "肇庆市": 112.4720,
+            "江门市": 113.0810, "茂名市": 110.9250, "惠州市": 114.4160, "梅州市": 116.1220,
+            "汕尾市": 115.3750, "河源市": 114.6980, "阳江市": 111.9830, "清远市": 113.0560,
+            "东莞市": 113.7518, "中山市": 113.3920, "潮州市": 116.6220, "揭阳市": 116.3720,
+            "云浮市": 112.0400,
+            // 广西壮族自治区
+            "南宁市": 108.3669, "柳州市": 109.4110, "桂林市": 110.2990, "梧州市": 111.2790,
+            "北海市": 109.1190, "防城港市": 108.3500, "钦州市": 108.6540, "贵港市": 109.5970,
+            "玉林市": 110.1520, "百色市": 106.6230, "贺州市": 111.5530, "河池市": 108.0690,
+            "来宾市": 109.2210, "崇左市": 107.3640,
+            // 海南省
+            "海口市": 110.1999, "三亚市": 109.5080, "三沙市": 112.3300, "儋州市": 109.5820,
+            "五指山市": 109.5170, "琼海市": 110.4740, "文昌市": 110.7500, "万宁市": 110.3890,
+            "东方市": 108.6540,
+            // 四川省
+            "成都市": 104.0665, "自贡市": 104.7780, "攀枝花市": 101.7160, "泸州市": 105.4420,
+            "德阳市": 104.4050, "绵阳市": 104.6790, "广元市": 105.8430, "遂宁市": 105.5730,
+            "内江市": 105.0580, "乐山市": 103.7630, "南充市": 106.0820, "眉山市": 103.8320,
+            "宜宾市": 104.6410, "广安市": 106.6330, "达州市": 107.4680, "雅安市": 103.0130,
+            "巴中市": 106.7470, "资阳市": 104.6280,
+            "阿坝藏族羌族自治州": 102.2210, "甘孜藏族自治州": 101.9690, "凉山彝族自治州": 102.2580,
+            // 贵州省
+            "贵阳市": 106.6302, "六盘水市": 104.8330, "遵义市": 106.9070, "安顺市": 105.9320,
+            "毕节市": 105.2830, "铜仁市": 109.1890,
+            "黔西南布依族苗族自治州": 104.9150, "黔东南苗族侗族自治州": 107.9830,
+            "黔南布依族苗族自治州": 107.5280,
+            // 云南省
+            "昆明市": 102.8329, "曲靖市": 103.7970, "玉溪市": 102.5460, "保山市": 99.1670,
+            "昭通市": 103.7170, "丽江市": 100.2330, "普洱市": 100.9660, "临沧市": 100.0890,
+            "楚雄彝族自治州": 101.5270, "红河哈尼族彝族自治州": 103.3940,
+            "文山壮族苗族自治州": 104.2440, "西双版纳傣族自治州": 100.7970,
+            "大理白族自治州": 100.2670, "德宏傣族景颇族自治州": 98.5860,
+            "怒江傈僳族自治州": 98.8560, "迪庆藏族自治州": 99.7060,
+            // 西藏自治区
+            "拉萨市": 91.1409, "日喀则市": 88.8820, "昌都市": 97.1790, "林芝市": 94.3620,
+            "山南市": 91.7730, "那曲市": 92.0510, "阿里地区": 80.1040,
+            // 陕西省
+            "西安市": 108.9398, "铜川市": 108.9480, "宝鸡市": 107.2450, "咸阳市": 108.7080,
+            "渭南市": 109.5080, "延安市": 109.4840, "汉中市": 107.0230, "榆林市": 109.7350,
+            "安康市": 109.0290, "商洛市": 109.9410,
+            // 甘肃省
+            "兰州市": 103.8343, "嘉峪关市": 98.2890, "金昌市": 102.1870, "白银市": 104.1430,
+            "天水市": 105.7240, "武威市": 102.6460, "张掖市": 100.4530, "平凉市": 106.6650,
+            "酒泉市": 98.4940, "庆阳市": 107.6390, "定西市": 104.6260, "陇南市": 104.9220,
+            "临夏回族自治州": 103.2130, "甘南藏族自治州": 102.9170,
+            // 青海省
+            "西宁市": 101.7782, "海东市": 102.0930,
+            "海北藏族自治州": 100.9620, "黄南藏族自治州": 102.0870,
+            "海南藏族自治州": 100.6270, "果洛藏族自治州": 100.2470,
+            "玉树藏族自治州": 97.0070, "海西蒙古族藏族自治州": 97.3680,
+            // 宁夏回族自治区
+            "银川市": 106.2309, "石嘴山市": 106.3760, "吴忠市": 106.1970, "固原市": 106.2430,
+            "中卫市": 105.1970,
+            // 新疆维吾尔自治区
+            "乌鲁木齐市": 87.6168, "克拉玛依市": 84.8740, "吐鲁番市": 89.1890, "哈密市": 93.5130,
+            "昌吉回族自治州": 87.3040, "博尔塔拉蒙古自治州": 82.0650,
+            "巴音郭楞蒙古自治州": 86.1410, "阿克苏地区": 80.2610,
+            "克孜勒苏柯尔克孜自治州": 76.1140, "喀什地区": 75.9890,
+            "和田地区": 79.9260, "伊犁哈萨克自治州": 81.3270,
+            "塔城地区": 82.9860, "阿勒泰地区": 88.1340,
+            // 香港特别行政区（各区统一使用香港坐标）
+            "香港特别行政区": 114.1694,
+            "中西区": 114.1694, "湾仔区": 114.1694, "东区": 114.1694, "南区": 114.1694,
+            "油尖旺区": 114.1694, "深水埗区": 114.1694, "九龙城区": 114.1694, "黄大仙区": 114.1694,
+            "观塘区": 114.1694, "荃湾区": 114.1694, "屯门区": 114.1694, "元朗区": 114.1694,
+            "北区": 114.1694, "大埔区": 114.1694, "西贡区": 114.1694, "沙田区": 114.1694,
+            "葵青区": 114.1694, "离岛区": 114.1694,
+            // 澳门特别行政区（各区统一使用澳门坐标）
+            "澳门特别行政区": 113.5491,
+            "花地玛堂区": 113.5491, "花王堂区": 113.5491, "望德堂区": 113.5491,
+            "大堂区": 113.5491, "风顺堂区": 113.5491, "嘉模堂区": 113.5491,
+            "路凼填海区": 113.5491, "圣方济各堂区": 113.5491,
+            // 台湾省
+            "台北市": 121.5654, "高雄市": 120.3014, "台中市": 120.6736, "台南市": 120.2175,
+            "新北市": 121.4690, "桃园市": 121.2170, "基隆市": 121.7300, "新竹市": 120.9730,
+            "嘉义市": 120.4490, "宜兰县": 121.7740, "新竹县": 120.9730, "苗栗县": 120.8230,
+            "彰化县": 120.5740, "南投县": 120.9870, "云林县": 120.4640, "嘉义县": 120.4490,
+            "屏东县": 120.6540, "台东县": 121.1530, "花莲县": 121.6110, "澎湖县": 119.5740,
+            "金门县": 118.3140, "连江县": 119.9450
+        };
+
+        // ========== 十二时辰映射 ==========
+        const shichenMap = [
+            { name: "子时", start: 23, end: 1 },   // 23:00 - 01:00
+            { name: "丑时", start: 1, end: 3 },    // 01:00 - 03:00
+            { name: "寅时", start: 3, end: 5 },    // 03:00 - 05:00
+            { name: "卯时", start: 5, end: 7 },    // 05:00 - 07:00
+            { name: "辰时", start: 7, end: 9 },    // 07:00 - 09:00
+            { name: "巳时", start: 9, end: 11 },   // 09:00 - 11:00
+            { name: "午时", start: 11, end: 13 },  // 11:00 - 13:00
+            { name: "未时", start: 13, end: 15 },  // 13:00 - 15:00
+            { name: "申时", start: 15, end: 17 },  // 15:00 - 17:00
+            { name: "酉时", start: 17, end: 19 },  // 17:00 - 19:00
+            { name: "戌时", start: 19, end: 21 },  // 19:00 - 21:00
+            { name: "亥时", start: 21, end: 23 }   // 21:00 - 23:00
+        ];
+
+        /**
+         * 计算真太阳时
+         * 公式：真太阳时 = 北京时间 + (经度 - 120) * 4 分钟
+         * 东经度越大，真太阳时越早；经度每差 1 度，时间差 4 分钟
+         *
+         * @param {number} year    - 年份
+         * @param {number} month   - 月份 (1-12)
+         * @param {number} day     - 日期 (1-31)
+         * @param {number} hour    - 小时 (0-23)
+         * @param {number} minute  - 分钟 (0-59)
+         * @param {number} longitude - 出生地经度（东经为正，如北京约 116.4）
+         * @returns {object} 包含真太阳时的年月日时分
+         */
+        function calculateTrueSolarTime(year, month, day, hour, minute, longitude) {
+            const offsetMinutes = (longitude - 120) * 4;
+            let totalMinutes = hour * 60 + minute + offsetMinutes;
+            let dayOffset = 0;
+            let zishiAdjusted = false;
+
+            // 处理负数时间（真太阳时比北京时间早很多）
+            while (totalMinutes < 0) {
+                totalMinutes += 1440;
+                dayOffset -= 1;
+            }
+
+            // 先判断是否在子时区间（23:00 ~ 23:59:59，即1380~1439分钟）
+            // 传统八字中，子时属于第二天
+            if (totalMinutes >= 1380 && totalMinutes < 1440) {
+                totalMinutes -= 1380;  // 转换为次日 0:xx
+                dayOffset += 1;
+                zishiAdjusted = true;
+            }
+
+            // 再处理跨天（totalMinutes >= 1440 的情况）
+            while (totalMinutes >= 1440) {
+                totalMinutes -= 1440;
+                dayOffset += 1;
+            }
+
+            // 从调整后的 totalMinutes 提取小时和分钟
+            const trueHour = Math.floor(totalMinutes / 60);
+            const trueMinute = Math.round(totalMinutes % 60);
+
+            // 处理分钟进位（防止四舍五入后出现 60 分钟）
+            let finalHour = trueHour;
+            let finalMinute = trueMinute;
+            if (finalMinute >= 60) {
+                finalMinute -= 60;
+                finalHour += 1;
+                if (finalHour >= 24) {
+                    finalHour -= 24;
+                    dayOffset += 1;
+                }
+            }
+
+            // 根据 dayOffset 计算最终的年月日（处理跨月、跨年）
+            let trueYear = year;
+            let trueMonth = month;
+            let trueDay = day + dayOffset;
+
+            while (trueDay <= 0) {
+                trueMonth -= 1;
+                if (trueMonth <= 0) {
+                    trueMonth = 12;
+                    trueYear -= 1;
+                }
+                trueDay += getDaysInMonth(trueYear, trueMonth);
+            }
+
+            while (trueDay > getDaysInMonth(trueYear, trueMonth)) {
+                trueDay -= getDaysInMonth(trueYear, trueMonth);
+                trueMonth += 1;
+                if (trueMonth > 12) {
+                    trueMonth = 1;
+                    trueYear += 1;
+                }
+            }
+
+            return {
+                year: trueYear,
+                month: trueMonth,
+                day: trueDay,
+                hour: finalHour,
+                minute: finalMinute,
+                zishiAdjusted: zishiAdjusted
+            };
+        }
+
+        /**
+         * 根据真太阳时判断传统十二时辰
+         * 十二时辰对照表：
+         *   子时: 23:00 - 01:00
+         *   丑时: 01:00 - 03:00
+         *   寅时: 03:00 - 05:00
+         *   卯时: 05:00 - 07:00
+         *   辰时: 07:00 - 09:00
+         *   巳时: 09:00 - 11:00
+         *   午时: 11:00 - 13:00
+         *   未时: 13:00 - 15:00
+         *   申时: 15:00 - 17:00
+         *   酉时: 17:00 - 19:00
+         *   戌时: 19:00 - 21:00
+         *   亥时: 21:00 - 23:00
+         *
+         * @param {number} hour   - 小时 (0-23)
+         * @param {number} minute - 分钟 (0-59)
+         * @returns {string} 时辰名称，如 "未时"
+         */
+        function getTraditionalShichen(hour, minute) {
+            const totalMinutes = hour * 60 + minute;
+
+            // 特殊处理：子时跨越零点（23:00 ~ 次日 01:00）
+            if (totalMinutes >= 23 * 60 || totalMinutes < 1 * 60) {
+                return "子时";
+            }
+            // 丑时：01:00 - 03:00
+            if (totalMinutes >= 1 * 60 && totalMinutes < 3 * 60) return "丑时";
+            // 寅时：03:00 - 05:00
+            if (totalMinutes >= 3 * 60 && totalMinutes < 5 * 60) return "寅时";
+            // 卯时：05:00 - 07:00
+            if (totalMinutes >= 5 * 60 && totalMinutes < 7 * 60) return "卯时";
+            // 辰时：07:00 - 09:00
+            if (totalMinutes >= 7 * 60 && totalMinutes < 9 * 60) return "辰时";
+            // 巳时：09:00 - 11:00
+            if (totalMinutes >= 9 * 60 && totalMinutes < 11 * 60) return "巳时";
+            // 午时：11:00 - 13:00
+            if (totalMinutes >= 11 * 60 && totalMinutes < 13 * 60) return "午时";
+            // 未时：13:00 - 15:00
+            if (totalMinutes >= 13 * 60 && totalMinutes < 15 * 60) return "未时";
+            // 申时：15:00 - 17:00
+            if (totalMinutes >= 15 * 60 && totalMinutes < 17 * 60) return "申时";
+            // 酉时：17:00 - 19:00
+            if (totalMinutes >= 17 * 60 && totalMinutes < 19 * 60) return "酉时";
+            // 戌时：19:00 - 21:00
+            if (totalMinutes >= 19 * 60 && totalMinutes < 21 * 60) return "戌时";
+            // 亥时：21:00 - 23:00
+            if (totalMinutes >= 21 * 60 && totalMinutes < 23 * 60) return "亥时";
+
+            return "未知";
+        }
+
+        /**
+         * 判断是否为闰年
+         */
+        function isLeapYear(year) {
+            return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        }
+
+        /**
+         * 获取指定年月的天数
+         */
+        function getDaysInMonth(year, month) {
+            const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            if (month === 2 && isLeapYear(year)) {
+                return 29;
+            }
+            return daysInMonth[month - 1];
+        }
+
+        // ========== 页面切换 ==========
+        function goToTestPage() {
+            document.getElementById("welcomePage").classList.add("hidden");
+            document.getElementById("resultPage").classList.add("hidden");
+            const testPage = document.getElementById("testPage");
+            testPage.classList.remove("hidden");
+            testPage.classList.add("fade-in");
+            initForm();
+        }
+
+        function goToResultPage() {
+            document.getElementById("testPage").classList.add("hidden");
+            const resultPage = document.getElementById("resultPage");
+            resultPage.classList.remove("hidden");
+            resultPage.classList.add("fade-in");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // ========== 初始化表单 ==========
+        function initForm() {
+            initYearSelect();
+            initMonthSelect();
+            updateDays();
+            initProvinceSelect();
+        }
+
+        /**
+         * 初始化年份下拉框（1940-2030）
+         */
+        function initYearSelect() {
+            const yearSelect = document.getElementById("year");
+            for (let year = 1940; year <= 2030; year++) {
+                const option = document.createElement("option");
+                option.value = year;
+                option.textContent = year + "年";
+                yearSelect.appendChild(option);
+            }
+            // 默认选择 2000 年
+            yearSelect.value = 2000;
+        }
+
+        /**
+         * 初始化月份下拉框（1-12月）
+         */
+        function initMonthSelect() {
+            const monthSelect = document.getElementById("month");
+            for (let month = 1; month <= 12; month++) {
+                const option = document.createElement("option");
+                option.value = month;
+                option.textContent = month + "月";
+                monthSelect.appendChild(option);
+            }
+        }
+
+        /**
+         * 根据年月更新日期下拉框
+         */
+        function updateDays() {
+            const year = parseInt(document.getElementById("year").value, 10);
+            const month = parseInt(document.getElementById("month").value, 10);
+            const daySelect = document.getElementById("day");
+            const currentDay = daySelect.value;
+
+            // 清空现有选项
+            daySelect.innerHTML = "";
+
+            const maxDays = getDaysInMonth(year, month);
+            for (let day = 1; day <= maxDays; day++) {
+                const option = document.createElement("option");
+                option.value = day;
+                option.textContent = day + "日";
+                daySelect.appendChild(option);
+            }
+
+            // 恢复之前的选择（如果有效）
+            if (currentDay && parseInt(currentDay, 10) <= maxDays) {
+                daySelect.value = currentDay;
+            } else {
+                daySelect.value = 1;
+            }
+        }
+
+        /**
+         * 初始化省份下拉框
+         */
+        function initProvinceSelect() {
+            const provinceSelect = document.getElementById("province");
+            for (const province in cityData) {
+                const option = document.createElement("option");
+                option.value = province;
+                option.textContent = province;
+                provinceSelect.appendChild(option);
+            }
+        }
+
+        /**
+         * 根据选中省份更新地级市下拉框
+         */
+        function updateCities() {
+            const province = document.getElementById("province").value;
+            const citySelect = document.getElementById("city");
+
+            // 清空现有选项
+            citySelect.innerHTML = "";
+
+            if (!province) {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "请先选择省份";
+                citySelect.appendChild(option);
+                return;
+            }
+
+            const cities = cityData[province] || [];
+            for (const city of cities) {
+                const option = document.createElement("option");
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            }
+        }
+
+        /**
+         * 计算八字（四柱）
+         * 使用 lunar-javascript 库，根据公历时间转换为八字干支
+         *
+         * @param {number} year    - 公历年
+         * @param {number} month   - 公历月 (1-12)
+         * @param {number} day     - 公历日 (1-31)
+         * @param {number} hour    - 真太阳时小时 (0-23)
+         * @param {number} minute  - 真太阳时分钟 (0-59)
+         * @returns {object} 包含年柱、月柱、日柱、时柱的八字对象
+         */
+        function calculateBazi(year, month, day, hour, minute) {
+            // 检查 lunar-javascript 库是否加载成功
+            // CDN 引入后，Solar 作为全局变量直接可用
+            if (typeof Solar === 'undefined') {
+                console.error("lunar-javascript 库未加载，无法计算八字");
+                return {
+                    yearPillar: "未知",
+                    monthPillar: "未知",
+                    dayPillar: "未知",
+                    hourPillar: "未知"
+                };
+            }
+
+            // 使用 lunar-javascript 库创建公历日期对象
+            // Solar.fromYmdHms(年, 月, 日, 时, 分, 秒) - 注意 H 大写
+            const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
+
+            // 获取农历对象（包含干支信息）
+            const lunar = solar.getLunar();
+
+            // 获取四柱干支
+            // getYearInGanZhi() - 年柱（干支，如 "甲子"）
+            // getMonthInGanZhi() - 月柱（干支，如 "丙寅"）
+            // getDayInGanZhi() - 日柱（干支，如 "戊戌"）
+            // getTimeInGanZhi() - 时柱（干支，如 "庚申"）
+            return {
+                yearPillar: lunar.getYearInGanZhi(),
+                monthPillar: lunar.getMonthInGanZhi(),
+                dayPillar: lunar.getDayInGanZhi(),
+                hourPillar: lunar.getTimeInGanZhi()
+            };
+        }
+
+        // ========== 地支藏干数据 ==========
+        // 每个地支所藏的天干（按顺序：本气、中气、余气）
+        const zhiCangGan = {
+            "子": ["癸"],
+            "丑": ["己", "癸", "辛"],
+            "寅": ["甲", "丙", "戊"],
+            "卯": ["乙"],
+            "辰": ["戊", "乙", "癸"],
+            "巳": ["丙", "戊", "庚"],
+            "午": ["丁", "己"],
+            "未": ["己", "丁", "乙"],
+            "申": ["庚", "壬", "戊"],
+            "酉": ["辛"],
+            "戌": ["戊", "辛", "丁"],
+            "亥": ["壬", "甲"]
+        };
+
+        // ========== 天干五行属性 ==========
+        const ganWuxing = {
+            "甲": "木", "乙": "木",
+            "丙": "火", "丁": "火",
+            "戊": "土", "己": "土",
+            "庚": "金", "辛": "金",
+            "壬": "水", "癸": "水"
+        };
+
+        // ========== 地支五行属性 ==========
+        const zhiWuxing = {
+            "子": "水", "丑": "土", "寅": "木", "卯": "木",
+            "辰": "土", "巳": "火", "午": "火", "未": "土",
+            "申": "金", "酉": "金", "戌": "土", "亥": "水"
+        };
+
+        // ========== 获取八字所有天干（排除日柱天干，含地支藏干） ==========
+        function getAllGansExcludeDayMaster(bazi) {
+            const allGans = [];
+            // 年、月、时柱的天干 + 所有地支藏干
+            const pillars = [
+                { p: bazi.yearPillar, isDay: false },
+                { p: bazi.monthPillar, isDay: false },
+                { p: bazi.dayPillar, isDay: true },
+                { p: bazi.hourPillar, isDay: false }
+            ];
+
+            for (const { p: pillar, isDay } of pillars) {
+                if (!pillar || pillar.length < 2) continue;
+                const gan = pillar[0];
+                const zhi = pillar[1];
+
+                // 排除日柱天干（日干）
+                if (!isDay) {
+                    allGans.push(gan);
+                }
+                // 地支藏干全部保留（包括日支藏干）
+                const cangGan = zhiCangGan[zhi] || [];
+                for (const g of cangGan) {
+                    allGans.push(g);
+                }
+            }
+            return allGans;
+        }
+
+        // ========== 判断天干阴阳 ==========
+        const yangGans = ["甲", "丙", "戊", "庚", "壬"];
+        function isYang(gan) {
+            return yangGans.includes(gan);
+        }
+
+        // ========== 详细五行统计（含阴阳属性） ==========
+        function statsWuxingDetailed(allGans, dayMasterGan) {
+            // 每个五行记录：数量、包含的天干列表、阴阳情况
+            const stats = {
+                "金": { count: 0, gans: [], hasYang: false, hasYin: false },
+                "木": { count: 0, gans: [], hasYang: false, hasYin: false },
+                "水": { count: 0, gans: [], hasYang: false, hasYin: false },
+                "火": { count: 0, gans: [], hasYang: false, hasYin: false },
+                "土": { count: 0, gans: [], hasYang: false, hasYin: false }
+            };
+
+            for (const gan of allGans) {
+                const wuxing = ganWuxing[gan];
+                if (!wuxing || !stats[wuxing]) continue;
+                stats[wuxing].count++;
+                stats[wuxing].gans.push(gan);
+                if (isYang(gan)) {
+                    stats[wuxing].hasYang = true;
+                } else {
+                    stats[wuxing].hasYin = true;
+                }
+            }
+
+            return stats;
+        }
+
+        // ========== 五行生克关系（用于判断十神） ==========
+        function getShishen(dayMasterGan, targetGan) {
+            const dayWuxing = ganWuxing[dayMasterGan];
+            const targetWuxing = ganWuxing[targetGan];
+            if (!dayWuxing || !targetWuxing) return "";
+
+            const dayIsYang = isYang(dayMasterGan);
+            const targetIsYang = isYang(targetGan);
+            const sameYinYang = dayIsYang === targetIsYang;
+
+            // 同我（比劫）
+            if (dayWuxing === targetWuxing) {
+                return sameYinYang ? "比肩" : "劫财";
+            }
+
+            // 我生（食伤）
+            const woSheng = { "木": "火", "火": "土", "土": "金", "金": "水", "水": "木" };
+            if (woSheng[dayWuxing] === targetWuxing) {
+                return sameYinYang ? "食神" : "伤官";
+            }
+
+            // 生我（印）
+            const shengWo = { "火": "木", "土": "火", "金": "土", "水": "金", "木": "水" };
+            if (shengWo[dayWuxing] === targetWuxing) {
+                return sameYinYang ? "偏印" : "正印";
+            }
+
+            // 我克（财）
+            const woKe = { "木": "土", "土": "水", "水": "火", "火": "金", "金": "木" };
+            if (woKe[dayWuxing] === targetWuxing) {
+                return sameYinYang ? "偏财" : "正财";
+            }
+
+            // 克我（官杀）
+            const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
+            if (keWo[dayWuxing] === targetWuxing) {
+                return sameYinYang ? "七杀" : "正官";
+            }
+
+            return "";
+        }
+
+        // ========== 判断地支是否为日主的禄或羊刃 ==========
+        function getLuOrRen(dayMasterGan, zhi) {
+            // 禄的对应关系（所有天干都有）
+            const luMap = {
+                "甲": "寅", "乙": "卯", "丙": "巳", "丁": "午",
+                "戊": "巳", "己": "午", "庚": "申", "辛": "酉",
+                "壬": "亥", "癸": "子"
+            };
+            // 羊刃的对应关系（只有五个阳干有）
+            const renMap = {
+                "甲": "卯", "丙": "午", "戊": "午",
+                "庚": "酉", "壬": "子"
+            };
+            
+            if (luMap[dayMasterGan] === zhi) {
+                return "建禄";
+            }
+            if (renMap[dayMasterGan] === zhi) {
+                return "羊刃";
+            }
+            return null;
+        }
+
+        // ========== 判断日主是否得月令支持 ==========
+        // 月令支持：月支为本气是日主的禄、刃、或生扶之地
+        function checkMonthSupport(bazi, dayMasterGan) {
+            const monthZhi = bazi.monthPillar[1];
+            const monthCangGan = zhiCangGan[monthZhi] || [];
+            const benQi = monthCangGan[0];
+            const dayWuxing = ganWuxing[dayMasterGan];
+            const benQiWuxing = ganWuxing[benQi];
+            const benQiShishen = getShishen(dayMasterGan, benQi);
+
+            // 计算本气的十神类型大类
+            let benQiShishenType = "";
+            if (dayWuxing === benQiWuxing) {
+                benQiShishenType = "比劫";
+            } else {
+                const woSheng = { "木": "火", "火": "土", "土": "金", "金": "水", "水": "木" };
+                const shengWo = { "火": "木", "土": "火", "金": "土", "水": "金", "木": "水" };
+                const woKe = { "木": "土", "土": "水", "水": "火", "火": "金", "金": "木" };
+                const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
+                if (woSheng[dayWuxing] === benQiWuxing) benQiShishenType = "食伤";
+                else if (shengWo[dayWuxing] === benQiWuxing) benQiShishenType = "印";
+                else if (woKe[dayWuxing] === benQiWuxing) benQiShishenType = "财";
+                else if (keWo[dayWuxing] === benQiWuxing) benQiShishenType = "官杀";
+            }
+
+            // 检查是否为禄或羊刃
+            const luOrRen = getLuOrRen(dayMasterGan, monthZhi);
+            if (luOrRen) {
+                return {
+                    supported: true,
+                    reason: `月支${monthZhi}为${dayMasterGan}木的${luOrRen}`,
+                    type: luOrRen,
+                    monthZhi: monthZhi,
+                    benQi: benQi,
+                    benQiShishen: benQiShishen,
+                    benQiShishenType: "比劫",
+                    luOrRen: luOrRen
+                };
+            }
+
+            // 月支本气与日主同五行（比劫，但非禄/刃）= 得令
+            if (dayWuxing === benQiWuxing) {
+                return {
+                    supported: true,
+                    reason: `月支${monthZhi}本气${benQi}为${benQiShishen}（同我）`,
+                    type: "比劫",
+                    monthZhi: monthZhi,
+                    benQi: benQi,
+                    benQiShishen: benQiShishen,
+                    benQiShishenType: benQiShishenType
+                };
+            }
+
+            // 月支本气生日主（印）= 得令
+            const shengWo = { "火": "木", "土": "火", "金": "土", "水": "金", "木": "水" };
+            if (shengWo[dayWuxing] === benQiWuxing) {
+                return {
+                    supported: true,
+                    reason: `月支${monthZhi}本气${benQi}为${benQiShishen}（生我）`,
+                    type: "印",
+                    monthZhi: monthZhi,
+                    benQi: benQi,
+                    benQiShishen: benQiShishen,
+                    benQiShishenType: benQiShishenType
+                };
+            }
+
+            return {
+                supported: false,
+                reason: `月支${monthZhi}本气${benQi}(${benQiWuxing})不生扶日主`,
+                type: benQiShishenType,
+                monthZhi: monthZhi,
+                benQi: benQi,
+                benQiShishen: benQiShishen,
+                benQiShishenType: benQiShishenType
+            };
+        }
+
+        // ========== 检查全局是否有正偏印和比劫 ==========
+        function hasYinBi(allGans, dayMasterGan) {
+            let hasYin = false;  // 正印或偏印
+            let hasBi = false;   // 比肩或劫财
+
+            for (const gan of allGans) {
+                const shishen = getShishen(dayMasterGan, gan);
+                if (shishen === "正印" || shishen === "偏印") {
+                    hasYin = true;
+                }
+                if (shishen === "比肩" || shishen === "劫财") {
+                    hasBi = true;
+                }
+            }
+
+            return { hasYin, hasBi, hasAny: hasYin || hasBi };
+        }
+
+        // ========== 前端客观统计主函数 ==========
+        function collectBaziStats(bazi) {
+            const dayMasterGan = bazi.dayPillar[0];
+            const dayMasterWuxing = ganWuxing[dayMasterGan];
+
+            // 1. 获取所有天干（排除日干）
+            const allGans = getAllGansExcludeDayMaster(bazi);
+
+            // 2. 详细五行统计（含阴阳）
+            const wuxingStats = statsWuxingDetailed(allGans, dayMasterGan);
+
+            // 3. 判断月令支持
+            const monthSupport = checkMonthSupport(bazi, dayMasterGan);
+
+            // 4. 检查是否有印比
+            const yinBiCheck = hasYinBi(allGans, dayMasterGan);
+
+            // 5. 找五行中数量最多的
+            const sortedWuxing = Object.entries(wuxingStats)
+                .filter(([_, v]) => v.count > 0)
+                .sort((a, b) => b[1].count - a[1].count);
+
+            // 6. 判断是否有官杀
+            let hasGuanSha = false;
+            for (const gan of allGans) {
+                const shishen = getShishen(dayMasterGan, gan);
+                if (shishen === "正官" || shishen === "七杀") {
+                    hasGuanSha = true;
+                    break;
+                }
+            }
+
+            // 7. 统计财星数量
+            let caiCount = 0;
+            for (const gan of allGans) {
+                const shishen = getShishen(dayMasterGan, gan);
+                if (shishen === "正财" || shishen === "偏财") {
+                    caiCount++;
+                }
+            }
+
+            // 8. 统计三类地支
+            const zhiList = [bazi.yearPillar[1], bazi.monthPillar[1], bazi.dayPillar[1], bazi.hourPillar[1]];
+            
+            // 外出类：寅、申、巳、亥
+            const travelZhi = ["寅", "申", "巳", "亥"];
+            const travelCount = zhiList.filter(zhi => travelZhi.includes(zhi)).length;
+            
+            // 桃花类：子、午、卯、酉
+            const taohuaZhi = ["子", "午", "卯", "酉"];
+            const taohuaCount = zhiList.filter(zhi => taohuaZhi.includes(zhi)).length;
+            
+            // 独立类：辰、戌、丑、未
+            const independenceZhi = ["辰", "戌", "丑", "未"];
+            const independenceCount = zhiList.filter(zhi => independenceZhi.includes(zhi)).length;
+
+            return {
+                dayMasterGan,
+                dayMasterWuxing,
+                allGans,
+                wuxingStats,
+                monthSupport,
+                yinBiCheck,
+                sortedWuxing,
+                hasGuanSha,
+                caiCount,
+                travelCount,
+                taohuaCount,
+                independenceCount
+            };
+        }
+
+        // ========== 前端格局判定（使用传统子平八字规则） ==========
+        function determinePattern(bazi, stats) {
+            const { dayMasterGan, wuxingStats, monthSupport, yinBiCheck, hasGuanSha, caiCount, sortedWuxing, allGans } = stats;
+            const monthZhi = bazi.monthPillar[1];
+            const monthCangGan = zhiCangGan[monthZhi] || [];
+            const monthBenQi = monthCangGan[0];
+
+            // 获取月令所有藏干的十神
+            const monthShishen = monthCangGan.map(g => getShishen(dayMasterGan, g));
+            const hasYin = monthShishen.includes("正印") || monthShishen.includes("偏印");
+            const hasBi = monthShishen.includes("比肩") || monthShishen.includes("劫财");
+            const hasShiShen = monthShishen.includes("食神");
+            const hasShangGuan = monthShishen.includes("伤官");
+            const hasCai = monthShishen.includes("正财") || monthShishen.includes("偏财");
+            const hasGuan = monthShishen.includes("正官");
+            const hasQiSha = monthShishen.includes("七杀");
+
+            // ========== 优先级 1：特殊格局 ==========
+            // 专旺格：日主得月令 + 无官杀 + 财多身旺
+            if (monthSupport.supported && !hasGuanSha && caiCount >= 3) {
+                return { pattern: "专旺格", reason: "日主得月令且无官杀，财多身旺" };
+            }
+
+            // 从格：全局无印比
+            if (!yinBiCheck.hasAny) {
+                // 看哪个五行最旺
+                const topWuxing = sortedWuxing.length > 0 ? sortedWuxing[0][0] : "";
+                const dayWuxing = ganWuxing[dayMasterGan];
+                
+                if (topWuxing) {
+                    // 从儿格：食伤旺
+                    const woSheng = { "木": "火", "火": "土", "土": "金", "金": "水", "水": "木" };
+                    if (woSheng[dayWuxing] === topWuxing) {
+                        return { pattern: "从儿格", reason: "全局无印比，食伤成势" };
+                    }
+                    // 从财格：财旺
+                    const woKe = { "木": "土", "土": "水", "水": "火", "火": "金", "金": "木" };
+                    if (woKe[dayWuxing] === topWuxing) {
+                        return { pattern: "从财格", reason: "全局无印比，财星成势" };
+                    }
+                    // 从杀格：官杀旺
+                    const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
+                    if (keWo[dayWuxing] === topWuxing) {
+                        return { pattern: "从杀格", reason: "全局无印比，官杀成势" };
+                    }
+                }
+            }
+
+            // ========== 优先级 2：月令本气格 ==========
+            const benQiShishen = getShishen(dayMasterGan, monthBenQi);
+            
+            // 建禄格 / 羊刃格
+            const luOrRen = getLuOrRen(dayMasterGan, monthZhi);
+            if (luOrRen === "建禄") {
+                return { pattern: "建禄格", reason: `月支${monthZhi}为${dayMasterGan}的禄` };
+            }
+            if (luOrRen === "羊刃") {
+                return { pattern: "羊刃格", reason: `月支${monthZhi}为${dayMasterGan}的羊刃` };
+            }
+
+            // 食神格 / 伤官格 / 食伤混杂格
+            if (benQiShishen === "食神" && hasShangGuan) {
+                return { pattern: "食伤混杂格", reason: "月令藏干同时含食神和伤官" };
+            }
+            if (benQiShishen === "伤官" && hasShiShen) {
+                return { pattern: "食伤混杂格", reason: "月令藏干同时含食神和伤官" };
+            }
+            if (benQiShishen === "食神") {
+                return { pattern: "食神格", reason: `月令本气${monthBenQi}为食神` };
+            }
+            if (benQiShishen === "伤官") {
+                return { pattern: "伤官格", reason: `月令本气${monthBenQi}为伤官` };
+            }
+
+            // 正财格 / 偏财格 / 正偏财混杂格
+            if ((benQiShishen === "正财" || benQiShishen === "偏财") && hasCai) {
+                const hasZhengCai = monthShishen.includes("正财");
+                const hasPianCai = monthShishen.includes("偏财");
+                if (hasZhengCai && hasPianCai) {
+                    return { pattern: "正偏财混杂格", reason: "月令藏干同时含正财和偏财" };
+                }
+                return { pattern: benQiShishen === "正财" ? "正财格" : "偏财格", reason: `月令本气${monthBenQi}为${benQiShishen}` };
+            }
+
+            // 正官格 / 七杀格 / 官杀混杂格
+            if ((benQiShishen === "正官" || benQiShishen === "七杀") && (hasGuan || hasQiSha)) {
+                if (hasGuan && hasQiSha) {
+                    return { pattern: "官杀混杂格", reason: "月令藏干同时含正官和七杀" };
+                }
+                return { pattern: benQiShishen === "正官" ? "正官格" : "七杀格", reason: `月令本气${monthBenQi}为${benQiShishen}` };
+            }
+
+            // 正印格 / 偏印格 / 正偏印混杂格
+            if ((benQiShishen === "正印" || benQiShishen === "偏印") && hasYin) {
+                const hasZhengYin = monthShishen.includes("正印");
+                const hasPianYin = monthShishen.includes("偏印");
+                if (hasZhengYin && hasPianYin) {
+                    return { pattern: "正偏印混杂格", reason: "月令藏干同时含正印和偏印" };
+                }
+                return { pattern: benQiShishen === "正印" ? "正印格" : "偏印格", reason: `月令本气${monthBenQi}为${benQiShishen}` };
+            }
+
+            // ========== 优先级 3：五行数量最多决定格局 ==========
+            if (sortedWuxing.length > 0) {
+                const topWuxing = sortedWuxing[0];
+                const topCount = topWuxing[1].count;
+                const topGans = topWuxing[1].gans;
+                
+                // 获取最旺五行的十神类型
+                const topShishenList = topGans.map(g => getShishen(dayMasterGan, g));
+                
+                // 检查是否有阴阳混杂
+                const hasYang = topShishenList.some(s => ["偏财", "七杀", "偏印", "食神", "劫财"].includes(s));
+                const hasYinInTop = topShishenList.some(s => ["正财", "正官", "正印", "伤官", "比肩"].includes(s));
+                
+                if (hasYang && hasYinInTop && topCount >= 2) {
+                    // 混杂判定
+                    if (topShishenList.includes("正财") || topShishenList.includes("偏财")) {
+                        return { pattern: "正偏财混杂格", reason: `${topWuxing[0]}行正偏财并见` };
+                    }
+                    if (topShishenList.includes("正官") || topShishenList.includes("七杀")) {
+                        return { pattern: "官杀混杂格", reason: `${topWuxing[0]}行官杀并见` };
+                    }
+                    if (topShishenList.includes("正印") || topShishenList.includes("偏印")) {
+                        return { pattern: "正偏印混杂格", reason: `${topWuxing[0]}行正偏印并见` };
+                    }
+                    if (topShishenList.includes("食神") || topShishenList.includes("伤官")) {
+                        return { pattern: "食伤混杂格", reason: `${topWuxing[0]}行食伤并见` };
+                    }
+                }
+                
+                // 单一五行格
+                const mainShishen = topShishenList.find(s => s && s !== "比肩" && s !== "劫财") || topShishenList[0];
+                switch (mainShishen) {
+                    case "正财": return { pattern: "正财格", reason: `${topWuxing[0]}行最旺` };
+                    case "偏财": return { pattern: "偏财格", reason: `${topWuxing[0]}行最旺` };
+                    case "正官": return { pattern: "正官格", reason: `${topWuxing[0]}行最旺` };
+                    case "七杀": return { pattern: "七杀格", reason: `${topWuxing[0]}行最旺` };
+                    case "正印": return { pattern: "正印格", reason: `${topWuxing[0]}行最旺` };
+                    case "偏印": return { pattern: "偏印格", reason: `${topWuxing[0]}行最旺` };
+                    case "食神": return { pattern: "食神格", reason: `${topWuxing[0]}行最旺` };
+                    case "伤官": return { pattern: "伤官格", reason: `${topWuxing[0]}行最旺` };
+                    default: break;
+                }
+            }
+
+            // ========== 兜底 ==========
+            return { pattern: "日主格", reason: "无明显格局，以日主为中心" };
+        }
+
+        // ========== 构造大模型 Prompt（AI 只负责写评语） ==========
+        function generateBaziAnalysis(bazi, dayMaster, stats, gender, patternResult) {
+            // 格式化五行统计描述（不显示具体数字）
+            const wuxingDesc = Object.entries(stats.wuxingStats)
+                .filter(([_, v]) => v.count > 0)
+                .map(([wx, v]) => {
+                    const yinYang = [];
+                    if (v.hasYang) yinYang.push("阳");
+                    if (v.hasYin) yinYang.push("阴");
+                    return `${wx}偏旺（含${yinYang.join("/")}：${v.gans.join("、")}）`;
+                })
+                .join("，");
+
+            // 格式化最多五行
+            const topWuxing = stats.sortedWuxing.length > 0 ? stats.sortedWuxing[0] : null;
+            const topDesc = topWuxing
+                ? `${topWuxing[0]}最旺（含${topWuxing[1].gans.join("、")}）`
+                : "五行分布较均匀";
+
+            // 月令描述
+            const monthDesc = stats.monthSupport.supported
+                ? `日主得月令支持（${stats.monthSupport.reason}）`
+                : `日主不得月令（${stats.monthSupport.reason}）`;
+
+            // 印比描述
+            const yinBiDesc = stats.yinBiCheck.hasAny
+                ? `全局${stats.yinBiCheck.hasYin ? "有印星" : "无印星"}，${stats.yinBiCheck.hasBi ? "有比劫" : "无比劫"}`
+                : "全局无印无比劫";
+
+            // 官杀描述
+            const guanShaDesc = stats.hasGuanSha ? "全局有官杀" : "全局无官杀";
+
+            // 财星描述
+            const caiDesc = stats.caiCount >= 3 ? "财星旺盛" : "财星配置适中";
+
+            // 地支分类描述（定性而非定量）
+            const zhiClassDesc = [];
+            if (stats.travelCount >= 2) zhiClassDesc.push("外出类地支较多（寅申巳亥≥2个）");
+            if (stats.taohuaCount >= 2) zhiClassDesc.push("桃花类地支较多（子午卯酉≥2个）");
+            if (stats.independenceCount >= 2) zhiClassDesc.push("独立类地支较多（辰戌丑未≥2个）");
+            const zhiDesc = zhiClassDesc.length > 0 
+                ? `地支特征：${zhiClassDesc.join("、")}` 
+                : "地支分布较为均衡";
+
+            const genderDesc = gender === "male" ? "男命" : "女命";
+
+            const prompt = `你是一位精通传统子平八字的资深命理师。请根据以下客观数据和已判定的格局，撰写一段专业的命理评语：
+
+【基本信息】
+性别：${genderDesc}
+
+【八字四柱】
+年柱：${bazi.yearPillar}
+月柱：${bazi.monthPillar}
+日柱：${bazi.dayPillar}（日主：${dayMaster}）
+时柱：${bazi.hourPillar}
+
+【客观统计数据】
+1. 五行强弱：${wuxingDesc}
+2. 最旺五行：${topDesc}
+3. 月令情况：${monthDesc}
+4. 印比情况：${yinBiDesc}
+5. 官杀情况：${guanShaDesc}
+6. 财星情况：${caiDesc}
+7. 地支特征：${zhiDesc}
+
+【已判定格局】
+格局：${patternResult.pattern}
+判定依据：${patternResult.reason}
+
+【输出格式要求】
+请严格按照以下三个步骤撰写评语：
+
+【第一步：格局总结】
+开篇用一句话精准总结命局，格式为：'您是${dayMaster}日主，属于${patternResult.pattern}。'
+
+【第二步：性格与特质评价】
+结合性别、日主五行属性以及格局特点，进行深度性格分析。
+
+【第三步：人生机遇与特质分析】
+根据地支特征分析人生机遇：
+- 若地支有外出类特征：分析外出发展、迁居、异乡闯荡的机遇
+- 若地支有桃花类特征：分析感情缘分、异性缘的特点
+- 若地支有独立类特征：分析独立自主、白手起家的特质
+- 若无明显特征：给出均衡发展的建议
+
+重要要求：
+- 不要提及任何具体数字（如"多少个"、"几个"），只用定性描述（如"较多"、"旺盛"、"适中"）
+- 语言温暖、通俗易懂、积极向上
+- 总字数控制在 350-400 字`;
+
+            return prompt;
+        }
+
+        // ========== 获取 AI 评语（通过本地代理服务器） ==========
+        async function getAiComment(prompt, stats, gender, patternResult) {
+            console.log('[AI] 正在通过本地代理调用千问大模型...');
+
+            try {
+                const response = await fetch(AI_PROXY_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        systemPrompt: '你是一位精通传统子平八字的资深命理师，擅长根据八字客观数据撰写专业、温暖、通俗易懂的命理评语。'
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`代理请求失败 (${response.status}): ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('[AI] 代理响应：', data);
+
+                // 解析千问的返回格式
+                let aiContent = null;
+
+                // 格式1: 千问标准格式 output.text
+                if (data.output && data.output.text) {
+                    aiContent = data.output.text;
+                }
+                // 格式2: ChatCompletion 格式 output.choices[0].message.content
+                else if (data.output && data.output.choices && data.output.choices.length > 0) {
+                    aiContent = data.output.choices[0].message.content;
+                }
+                // 格式3: 直接在 data.text
+                else if (data.text) {
+                    aiContent = data.text;
+                }
+                // 错误响应
+                else if (data.error || data.message) {
+                    throw new Error(data.message || data.error);
+                }
+
+                if (aiContent) {
+                    console.log('%c[AI] 千问评语生成成功', 'color: green; font-weight: bold;');
+                    console.log(aiContent);
+                    return parseAIResponse(aiContent, stats, gender, patternResult);
+                } else {
+                    console.error('[AI] 无法解析的响应格式：', data);
+                    throw new Error('API 返回格式异常');
+                }
+
+            } catch (error) {
+                console.error('[AI] 代理调用失败：', error.message);
+                if (FALLBACK_TO_MOCK) {
+                    console.warn('[AI] 回退到本地 Mock 数据');
+                    return getMockComment(stats, gender, patternResult);
+                }
+                throw error;
+            }
+        }
+
+        // ========== 解析 AI 返回内容 ==========
+        function parseAIResponse(aiContent, stats, gender, patternResult) {
+            // 使用前端判定的格局（确保一致性）
+            return {
+                pattern: patternResult.pattern,
+                comment: aiContent
+            };
+        }
+
+        // ========== 本地 Mock 评语（API 不可用时的备选） ==========
+        function getMockComment(stats, gender, patternResult) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    // 使用前端判定的格局生成 Mock 评语
+                    const comment = generateThreeStepComment(patternResult.pattern, stats, gender);
+                    resolve({
+                        pattern: patternResult.pattern,
+                        comment: comment
+                    });
+                }, 300);
+            });
+        }
+
+        // ========== 生成三步结构评语 ==========
+        function generateThreeStepComment(pattern, stats, gender) {
+            const { dayMasterGan, dayMasterWuxing, travelCount, taohuaCount, independenceCount, caiCount, hasGuanSha } = stats;
+            const genderDesc = gender === "male" ? "男士" : "女士";
+
+            // 日主五行特质描述
+            const wuxingTrait = {
+                "木": "坚韧挺拔、积极向上",
+                "火": "热情奔放、光芒四射",
+                "土": "厚德载物、稳重可靠",
+                "金": "刚毅果断、锐意进取",
+                "水": "智慧灵动、随机应变"
+            };
+
+            // 格局性格描述
+            const patternTrait = {
+                "建禄格": "自立自强，具备白手起家的能力，性格独立自主，有较强的意志力和执行力",
+                "羊刃格": "刚毅果断，勇猛无畏，具备极强的行动力和开拓精神，善于在逆境中崛起",
+                "食神格": "天生具备艺术天赋和审美能力，享受生活中的美好事物，性格温和开朗，富有幽默感",
+                "伤官格": "思维敏捷，才华出众，常有独特见解和创造性思维，性格独立自主",
+                "食伤混杂格": "才华横溢，兼具食神的温润和伤官的锐利，艺术天赋与创造力并存，适合从事文化艺术领域",
+                "正印格": "天生具备良好的学习能力和领悟力，学识渊博，气质高雅，性格温和仁慈",
+                "偏印格": "思维独特，见解独到，常有出奇制胜的想法和创意，适合深度思考领域",
+                "正偏印混杂格": "兼具正印的博学和偏印的独特，领悟力极强，既能融会贯通又能独辟蹊径，适合学术研究",
+                "正财格": "天生具有理财意识和商业头脑，做事踏实稳健，不贪图捷径",
+                "偏财格": "善于把握商机，敢于冒险，财运多来自投资和副业，性格豪爽大方",
+                "正偏财混杂格": "财运亨通，兼具正财的稳定和偏财的机遇，理财能力出众，善于把握各种财富机会",
+                "正官格": "天生具有较强的自律意识和领导才能，做事有条不紊，注重规则与秩序",
+                "七杀格": "天生具有过人的胆识和决断力，面对困难能够迎难而上，性格刚毅果决",
+                "官杀混杂格": "具备强烈的使命感和责任感，外柔内刚，擅长在复杂环境中找到平衡点",
+                "专旺格": "在某一领域有突出表现，能够专心致志地追求目标，具备很强的专业能力",
+                "从杀格": "善于借助外部力量成就事业，懂得顺势而为，在复杂环境中找到自己的位置",
+                "从财格": "天生具备商业头脑和理财能力，善于把握财富机会",
+                "从儿格": "才华横溢，创造力强，适合从事艺术、文化、教育等领域",
+                "杂气格": "具备多方面的才能，能够适应不同的环境和挑战，性格灵活多变"
+            };
+
+            // 第二步：性格与特质评价
+            const traitDesc = patternTrait[pattern] || "具备独特的个性魅力和发展潜力";
+            const personalityPart = `${genderDesc}，您作为${dayMasterGan}${dayMasterWuxing}日主，天生具有${wuxingTrait[dayMasterWuxing]}的特质。${traitDesc}。`;
+
+            // 第三步：人生机遇分析
+            let opportunityPart = "";
+            if (gender === "male") {
+                if (caiCount >= 3) {
+                    opportunityPart = `命局财星旺盛，财富机遇极佳，正财稳定、偏财可得，适合从事商业、投资等领域。`;
+                } else {
+                    opportunityPart = `命局财星配置适中，财运平稳上升，通过努力可得稳定收入，亦可把握投资机遇。`;
+                }
+            } else {
+                if (hasGuanSha) {
+                    opportunityPart = `命局官杀旺盛，事业机遇突出，有较强的领导才能和管理能力，适合从事管理、专业技术等领域。`;
+                } else {
+                    opportunityPart = `命局官杀配置适中，事业发展稳健，能够在自己的领域中稳步成长，获得认可与成就。`;
+                }
+            }
+
+            // 扩展评语：根据地支分类
+            let extensionPart = "";
+            
+            // 外出发展：寅、申、巳、亥 >= 2
+            if (travelCount >= 2) {
+                extensionPart += `与外缘有缘，适合外出发展、迁居或在异乡闯荡，动中求财、动中求机会，出门在外多有贵人相助。`;
+            }
+            
+            // 桃花运势：子、午、卯、酉 >= 2
+            if (taohuaCount >= 2) {
+                extensionPart += `桃花旺盛，异性缘极佳，自带独特魅力，感情生活丰富多彩。`;
+            }
+            
+            // 独立特质：辰、戌、丑、未 >= 2
+            if (independenceCount >= 2) {
+                extensionPart += `具备独立自主的精神，能够白手起家，在困境中崛起，做事有恒心毅力，适合独自创业或主导项目。`;
+            }
+
+            // 组合完整评语
+            const comment = `【格局总结】您是${dayMasterGan}${dayMasterWuxing}日主，属于${pattern}。\n\n【性格与特质评价】${personalityPart}\n\n【人生机遇与特质分析】${opportunityPart}${extensionPart}`;
+
+            return comment;
+        }
+
+        // ========== Mock 格局判定（使用前端统计数据） ==========
+        function mockDeterminePattern(stats, gender) {
+            const { wuxingStats, monthSupport, yinBiCheck, hasGuanSha, caiCount, sortedWuxing, dayMasterGan, dayMasterWuxing, allGans } = stats;
+
+            const shishenMap = {
+                "比劫": "建禄格",
+                "建禄": "建禄格",
+                "羊刃": "羊刃格",
+                "食神": "食神格",
+                "伤官": "伤官格",
+                "食伤混杂": "食伤混杂格",
+                "正印": "正印格",
+                "偏印": "偏印格",
+                "正偏印混杂": "正偏印混杂格",
+                "正财": "正财格",
+                "偏财": "偏财格",
+                "正偏财混杂": "正偏财混杂格",
+                "正官": "正官格",
+                "七杀": "七杀格",
+                "官杀混杂": "官杀混杂格"
+            };
+
+            // 根据五行生克关系计算十神类型大类
+            const getShishenTypeByWuxing = (targetWuxing) => {
+                if (targetWuxing === dayMasterWuxing) return "比劫";
+                const woSheng = { "木": "火", "火": "土", "土": "金", "金": "水", "水": "木" };
+                if (woSheng[dayMasterWuxing] === targetWuxing) return "食伤";
+                const shengWo = { "火": "木", "土": "火", "金": "土", "水": "金", "木": "水" };
+                if (shengWo[dayMasterWuxing] === targetWuxing) return "印";
+                const woKe = { "木": "土", "土": "水", "水": "火", "火": "金", "金": "木" };
+                if (woKe[dayMasterWuxing] === targetWuxing) return "财";
+                const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
+                if (keWo[dayMasterWuxing] === targetWuxing) return "官杀";
+                return "未知";
+            };
+
+            // 基于实际天干的十神，判断正/偏/混杂
+            const determinePatternKey = (gans, shishenType) => {
+                let hasZheng = false;
+                let hasPian = false;
+                for (const gan of gans) {
+                    const shishen = getShishen(dayMasterGan, gan);
+                    if (shishenType === "官杀") {
+                        if (shishen === "正官") hasZheng = true;
+                        else if (shishen === "七杀") hasPian = true;
+                    } else if (shishenType === "印") {
+                        if (shishen === "正印") hasZheng = true;
+                        else if (shishen === "偏印") hasPian = true;
+                    } else if (shishenType === "财") {
+                        if (shishen === "正财") hasZheng = true;
+                        else if (shishen === "偏财") hasPian = true;
+                    } else if (shishenType === "食伤") {
+                        if (shishen === "食神") hasZheng = true;
+                        else if (shishen === "伤官") hasPian = true;
+                    } else if (shishenType === "比劫") {
+                        return "比劫";
+                    }
+                }
+                // 正偏都有 → 混杂
+                if (hasZheng && hasPian) {
+                    if (shishenType === "官杀") return "官杀混杂";
+                    if (shishenType === "印") return "正偏印混杂";
+                    if (shishenType === "财") return "正偏财混杂";
+                    if (shishenType === "食伤") return "食伤混杂";
+                }
+                // 只有正
+                if (hasZheng) {
+                    if (shishenType === "官杀") return "正官";
+                    if (shishenType === "印") return "正印";
+                    if (shishenType === "财") return "正财";
+                    if (shishenType === "食伤") return "食神";
+                }
+                // 只有偏
+                if (hasPian) {
+                    if (shishenType === "官杀") return "七杀";
+                    if (shishenType === "印") return "偏印";
+                    if (shishenType === "财") return "偏财";
+                    if (shishenType === "食伤") return "伤官";
+                }
+                return "";
+            };
+
+            // 检查全局某十神类型的正偏情况（用于月令判定时检查全局混杂）
+            const checkGlobalShishenMix = (shishenType) => {
+                let hasZheng = false;
+                let hasPian = false;
+                for (const gan of allGans) {
+                    const shishen = getShishen(dayMasterGan, gan);
+                    if (shishenType === "官杀") {
+                        if (shishen === "正官") hasZheng = true;
+                        else if (shishen === "七杀") hasPian = true;
+                    } else if (shishenType === "印") {
+                        if (shishen === "正印") hasZheng = true;
+                        else if (shishen === "偏印") hasPian = true;
+                    } else if (shishenType === "财") {
+                        if (shishen === "正财") hasZheng = true;
+                        else if (shishen === "偏财") hasPian = true;
+                    } else if (shishenType === "食伤") {
+                        if (shishen === "食神") hasZheng = true;
+                        else if (shishen === "伤官") hasPian = true;
+                    }
+                }
+                if (hasZheng && hasPian) {
+                    if (shishenType === "官杀") return "官杀混杂";
+                    if (shishenType === "印") return "正偏印混杂";
+                    if (shishenType === "财") return "正偏财混杂";
+                    if (shishenType === "食伤") return "食伤混杂";
+                }
+                if (hasZheng) {
+                    if (shishenType === "官杀") return "正官";
+                    if (shishenType === "印") return "正印";
+                    if (shishenType === "财") return "正财";
+                    if (shishenType === "食伤") return "食神";
+                }
+                if (hasPian) {
+                    if (shishenType === "官杀") return "七杀";
+                    if (shishenType === "印") return "偏印";
+                    if (shishenType === "财") return "偏财";
+                    if (shishenType === "食伤") return "伤官";
+                }
+                return "";
+            };
+
+            // 找数量最多的五行
+            let maxWuxing = null;
+            let maxCount = 0;
+            for (const [wx, data] of Object.entries(wuxingStats)) {
+                if (data.count > maxCount) {
+                    maxCount = data.count;
+                    maxWuxing = wx;
+                }
+            }
+
+            // 确定格局名称的辅助函数
+            const getResult = (patternName) => {
+                return {
+                    pattern: patternName,
+                    comment: generateThreeStepComment(patternName, stats, gender)
+                };
+            };
+
+            // 规则一：某五行 >= 4（四见定局）
+            if (maxCount >= 4 && maxWuxing) {
+                const wxData = wuxingStats[maxWuxing];
+                const shishenType = getShishenTypeByWuxing(maxWuxing);
+                const patternKey = determinePatternKey(wxData.gans, shishenType);
+                if (patternKey && shishenMap[patternKey]) {
+                    return getResult(shishenMap[patternKey]);
+                }
+            }
+
+            // 规则二：专旺格（特殊格局：日主得月令支持且无官杀克制）
+            if (monthSupport.supported && !hasGuanSha && caiCount <= 3) {
+                return getResult("专旺格");
+            }
+
+            // 规则三：从格（特殊格局：全局无印比，从势最旺五行）
+            if (!yinBiCheck.hasAny && maxWuxing) {
+                const shishenType = getShishenTypeByWuxing(maxWuxing);
+                if (shishenType === "官杀") {
+                    return getResult("从杀格");
+                } else if (shishenType === "财") {
+                    return getResult("从财格");
+                } else if (shishenType === "食伤") {
+                    return getResult("从儿格");
+                }
+            }
+
+            // 规则四：建禄/羊刃格（月令为禄或羊刃，检查全局是否有混杂）
+            if (monthSupport.luOrRen && shishenMap[monthSupport.luOrRen]) {
+                // 禄/羊刃本身是比劫，检查全局比劫情况
+                const patternKey = checkGlobalShishenMix("比劫");
+                if (patternKey && shishenMap[patternKey]) {
+                    return getResult(shishenMap[patternKey]);
+                }
+                return getResult(shishenMap[monthSupport.luOrRen]);
+            }
+
+            // 规则五：月令判定（普通格局：根据地支本气的十神类型，检查全局正偏混杂）
+            if (monthSupport.benQiShishenType && monthSupport.benQiShishenType !== "比劫") {
+                const patternKey = checkGlobalShishenMix(monthSupport.benQiShishenType);
+                if (patternKey && shishenMap[patternKey]) {
+                    return getResult(shishenMap[patternKey]);
+                }
+            } else if (monthSupport.benQiShishen && shishenMap[monthSupport.benQiShishen]) {
+                // 比劫类用建禄格
+                return getResult(shishenMap[monthSupport.benQiShishen]);
+            }
+
+            // 回退：根据最旺五行判定
+            if (maxWuxing) {
+                const shishenType = getShishenTypeByWuxing(maxWuxing);
+                const wxData = wuxingStats[maxWuxing];
+                const patternKey = determinePatternKey(wxData.gans, shishenType);
+                if (patternKey && shishenMap[patternKey]) {
+                    return getResult(shishenMap[patternKey]);
+                }
+            }
+
+            // 最终回退
+            return getResult("杂气格");
+        }
+
+        // ========== 表单提交 ==========
+        async function submitForm(event) {
+            event.preventDefault();
+
+            // 获取表单数据
+            const year = parseInt(document.getElementById("year").value, 10);
+            const month = parseInt(document.getElementById("month").value, 10);
+            const day = parseInt(document.getElementById("day").value, 10);
+            const timeStr = document.getElementById("time").value;
+            const province = document.getElementById("province").value;
+            const city = document.getElementById("city").value;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+
+            // 解析时间字符串 "HH:mm"
+            if (!timeStr) {
+                alert("请选择出生时间");
+                return;
+            }
+            const [hourStr, minuteStr] = timeStr.split(":");
+            const hour = parseInt(hourStr, 10);
+            const minute = parseInt(minuteStr, 10);
+
+            // 根据城市获取经度
+            const longitude = cityLongitude[city];
+            if (longitude === undefined) {
+                alert("所选城市暂无经度数据，请更换其他城市");
+                return;
+            }
+
+            // 设置按钮为 loading 状态
+            const submitBtn = document.getElementById("submitBtn");
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = "正在排盘...";
+
+            try {
+                // 计算真太阳时
+                const trueSolarTime = calculateTrueSolarTime(year, month, day, hour, minute, longitude);
+
+                // 计算八字排盘
+                const bazi = calculateBazi(
+                    trueSolarTime.year,
+                    trueSolarTime.month,
+                    trueSolarTime.day,
+                    trueSolarTime.hour,
+                    trueSolarTime.minute
+                );
+
+                // 检查八字是否计算成功
+                if (bazi.yearPillar === "未知") {
+                    alert("八字计算失败，请检查网络连接后重试");
+                    return;
+                }
+
+                // 控制台打印完整数据
+                console.log("========== 格局测试计算结果 ==========");
+                console.log("性别：", gender === "male" ? "男" : "女");
+                console.log("出生地：", `${province} ${city}`);
+                console.log("经度：", longitude);
+                console.log("真太阳时：", `${trueSolarTime.year}年${trueSolarTime.month}月${trueSolarTime.day}日 ${trueSolarTime.hour}:${trueSolarTime.minute}`);
+                console.log("八字排盘：", bazi);
+
+                // 日主信息
+                const dayMasterGan = bazi.dayPillar[0];
+                const dayMasterWuxing = ganWuxing[dayMasterGan];
+                const dayMaster = `${dayMasterGan}${dayMasterWuxing}`;
+
+                // 前端客观统计
+                const stats = collectBaziStats(bazi);
+                console.log("前端客观统计：", stats);
+
+                // 前端格局判定（使用传统子平八字规则）
+                const patternResult = determinePattern(bazi, stats);
+                console.log("格局判定结果：", patternResult);
+
+                // 构造大模型 Prompt（AI 只负责写评语）
+                const prompt = generateBaziAnalysis(bazi, dayMaster, stats, gender, patternResult);
+
+                // 更新按钮文案为 AI 生成中
+                submitBtn.textContent = "AI 正在分析命盘...";
+
+                // 调用千问大模型（或 Mock），使用前端判定的格局
+                const aiResult = await getAiComment(prompt, stats, gender, patternResult);
+                console.log("AI 判定结果：", aiResult);
+                console.log("======================================");
+
+                // 跳转到结果页
+                goToResultPage();
+
+                // 渲染结果页（客观统计 + 格局判定 + AI结果）
+                renderResultPage(bazi, stats, dayMaster, patternResult, aiResult, gender);
+
+            } catch (error) {
+                console.error("计算失败：", error);
+                alert("计算过程中出现错误，请重试");
+            } finally {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        }
+
+        // ========== 渲染结果页 ==========
+        function renderResultPage(bazi, stats, dayMaster, patternResult, aiResult, gender) {
+            // 1. 渲染八字排盘（含藏干）
+            const pillarsData = [
+                { label: "年柱", ganZhi: bazi.yearPillar },
+                { label: "月柱", ganZhi: bazi.monthPillar },
+                { label: "日柱", ganZhi: bazi.dayPillar },
+                { label: "时柱", ganZhi: bazi.hourPillar }
+            ];
+
+            const pillarsHtml = pillarsData.map(p => {
+                const gan = p.ganZhi[0];
+                const zhi = p.ganZhi[1];
+                const cangGan = zhiCangGan[zhi] || [];
+                const cangGanStr = cangGan.join("、");
+                return `
+                    <div class="bazi-pillar">
+                        <span class="bazi-pillar-label">${p.label}</span>
+                        <span class="bazi-pillar-ganzhi">
+                            <span class="bazi-pillar-gan">${gan}</span>
+                            <span class="bazi-pillar-zhi">${zhi}</span>
+                        </span>
+                        <span class="bazi-pillar-hidden">
+                            <span class="bazi-pillar-hidden-title">藏干</span>
+                            ${cangGanStr}
+                        </span>
+                    </div>
+                `;
+            }).join("");
+            document.getElementById("resultPillars").innerHTML = pillarsHtml;
+
+            // 2. 渲染客观统计数据（五行统计，含阴阳）
+            const wuxingClass = { "金": "wuxing-metal", "木": "wuxing-wood", "水": "wuxing-water", "火": "wuxing-fire", "土": "wuxing-earth" };
+            const wuxingHtml = Object.entries(stats.wuxingStats)
+                .filter(([_, v]) => v.count > 0)
+                .map(([wx, v]) => {
+                    const yinYang = [];
+                    if (v.hasYang) yinYang.push("阳");
+                    if (v.hasYin) yinYang.push("阴");
+                    return `
+                        <div class="wuxing-item">
+                            <span class="wuxing-name">${wx}<br>(${yinYang.join("/")})</span>
+                            <span class="wuxing-count ${wuxingClass[wx]}">${v.count}</span>
+                        </div>
+                    `;
+                }).join("");
+            document.getElementById("wuxingArea").innerHTML = wuxingHtml;
+
+            // 3. 渲染基本信息（性别）
+            const genderText = gender === "male" ? "男" : "女";
+            document.getElementById("genderValue").textContent = genderText;
+
+            // 4. 渲染前端判定的格局
+            document.getElementById("patternValue").textContent = patternResult.pattern;
+            const supportText = stats.monthSupport.supported ? "得月令" : "不得月令";
+            const yinBiText = stats.yinBiCheck.hasAny ? "有印比" : "无印比";
+            document.getElementById("dayMasterInfo").textContent = 
+                `日主：${dayMaster}　|　${supportText}　|　${yinBiText}`;
+
+            // 5. 渲染 AI 评语
+            const commentContent = aiResult.comment;
+            let commentHtml = renderCommentContent(commentContent);
+            document.getElementById("commentContent").innerHTML = commentHtml;
+        }
+
+        // ========== 渲染 AI 评语内容（兼容多种格式） ==========
+        function renderCommentContent(content) {
+            // 去除可能的 markdown 标记
+            let text = content.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+
+            // 尝试按段落分割（双换行或中文句号后跟换行）
+            const paragraphs = text
+                .split(/\n{2,}/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            if (paragraphs.length === 0) {
+                return '';
+            }
+
+            let html = '';
+            paragraphs.forEach((para) => {
+                // 检查是否有 【】 标题格式
+                const titleMatch = para.match(/^【(.+?)】/);
+                if (titleMatch) {
+                    const title = titleMatch[1];
+                    const body = para.replace(/^【.+?】/, '').trim();
+                    html += `
+                        <div class="comment-step">
+                            <div class="comment-step-title">${title}</div>
+                            <div class="comment-step-content">${body || ''}</div>
+                        </div>
+                    `;
+                } else {
+                    // 检查是否有编号开头（如 1. 2. 或 一、二、）
+                    const numberedMatch = para.match(/^([一二三四五六七八九十]+[、.．]\s*)?(.+)/s);
+                    const body = numberedMatch ? numberedMatch[0] : para;
+                    html += `
+                        <div class="comment-step">
+                            <div class="comment-step-content">${body}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            return html;
+        }
+    </script>
+</body>
+</html>
