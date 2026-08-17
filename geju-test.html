@@ -1641,6 +1641,48 @@
             const hasGuan = monthShishen.includes("正官");
             const hasQiSha = monthShishen.includes("七杀");
 
+            // ========== 优先级 0：四见定局 ==========
+            // 检查是否有某个五行出现≥4次（不包括日主本身的五行）
+            const dayWuxing = ganWuxing[dayMasterGan];
+            for (const [wx, data] of Object.entries(wuxingStats)) {
+                if (wx === dayWuxing) continue; // 跳过日主五行
+                if (data.count >= 4) {
+                    // 四见该五行，检查阴阳混杂
+                    const shishenList = data.gans.map(g => getShishen(dayMasterGan, g));
+                    const hasYang = shishenList.some(s => ["偏财", "七杀", "偏印", "食神", "劫财"].includes(s));
+                    const hasYinInFour = shishenList.some(s => ["正财", "正官", "正印", "伤官", "比肩"].includes(s));
+                    
+                    if (hasYang && hasYinInFour) {
+                        // 混杂判定
+                        if (shishenList.includes("正财") || shishenList.includes("偏财")) {
+                            return { pattern: "正偏财混杂格", reason: `${wx}行四见，正偏财并见` };
+                        }
+                        if (shishenList.includes("正官") || shishenList.includes("七杀")) {
+                            return { pattern: "官杀混杂格", reason: `${wx}行四见，官杀并见` };
+                        }
+                        if (shishenList.includes("正印") || shishenList.includes("偏印")) {
+                            return { pattern: "正偏印混杂格", reason: `${wx}行四见，正偏印并见` };
+                        }
+                        if (shishenList.includes("食神") || shishenList.includes("伤官")) {
+                            return { pattern: "食伤混杂格", reason: `${wx}行四见，食伤并见` };
+                        }
+                    }
+                    
+                    // 单一十神
+                    const mainShishen = shishenList.find(s => s && s !== "比肩" && s !== "劫财") || shishenList[0];
+                    switch (mainShishen) {
+                        case "正财": return { pattern: "正财格", reason: `${wx}行四见` };
+                        case "偏财": return { pattern: "偏财格", reason: `${wx}行四见` };
+                        case "正官": return { pattern: "正官格", reason: `${wx}行四见` };
+                        case "七杀": return { pattern: "七杀格", reason: `${wx}行四见` };
+                        case "正印": return { pattern: "正印格", reason: `${wx}行四见` };
+                        case "偏印": return { pattern: "偏印格", reason: `${wx}行四见` };
+                        case "食神": return { pattern: "食神格", reason: `${wx}行四见` };
+                        case "伤官": return { pattern: "伤官格", reason: `${wx}行四见` };
+                    }
+                }
+            }
+
             // ========== 优先级 1：特殊格局 ==========
             // 专旺格：日主得月令 + 无官杀 + 财多身旺
             if (monthSupport.supported && !hasGuanSha && caiCount >= 3) {
