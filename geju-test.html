@@ -1939,13 +1939,19 @@
             
             try {
                 // 使用 text/plain 绕过 CORS 预检请求
+                const requestBody = JSON.stringify({
+                    prompt: prompt,
+                    systemPrompt: '你是一位精通传统子平八字的资深命理师，擅长根据八字客观数据撰写专业、温暖、通俗易懂的命理评语。'
+                });
+                
+                console.log('[AI] 请求地址:', AI_PROXY_URL);
+                console.log('[AI] 请求 body 前 200 字:', requestBody.substring(0, 200));
+                console.log('[AI] 请求 body 总长度:', requestBody.length);
+                
                 const response = await fetch(AI_PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        systemPrompt: '你是一位精通传统子平八字的资深命理师，擅长根据八字客观数据撰写专业、温暖、通俗易懂的命理评语。'
-                    }),
+                    body: requestBody,
                     signal: controller.signal
                 });
 
