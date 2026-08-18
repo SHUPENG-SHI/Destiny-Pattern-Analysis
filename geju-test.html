@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
             background: linear-gradient(160deg, #F7F9FC 0%, #EDF2F7 100%);
             color: #3A4A5C;
             min-height: 100vh;
@@ -55,7 +55,7 @@
 
         /* ========== 标题样式 ========== */
         h1 {
-            font-family: 'Songti SC', 'SimSun', serif;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
             font-size: 3rem;
             font-weight: 400;
             letter-spacing: 4px;
@@ -65,12 +65,12 @@
         }
 
         h2 {
-            font-family: 'Songti SC', 'SimSun', serif;
-            font-size: 2rem;
-            font-weight: 400;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 700;
             margin-bottom: 32px;
-            color: #4A5A6C;
-            letter-spacing: 3px;
+            color: #2C3E50;
+            letter-spacing: 4px;
         }
 
         /* ========== 按钮样式 ========== */
@@ -178,10 +178,11 @@
 
         .result-item {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             padding: 12px 0;
             font-size: 0.9375rem;
+            gap: 16px;
         }
 
         .result-label {
@@ -221,7 +222,7 @@
         }
 
         .bazi-title {
-            font-family: 'Songti SC', 'SimSun', serif;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
             font-size: 1rem;
             color: #4A5A6C;
             margin-bottom: 24px;
@@ -257,7 +258,7 @@
             flex-direction: column;
             align-items: center;
             gap: 2px;
-            font-family: 'Songti SC', 'SimSun', serif;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
             font-weight: 600;
             color: #3A4A5C;
             letter-spacing: 2px;
@@ -303,11 +304,11 @@
         }
 
         .pattern-value {
-            font-family: 'Songti SC', 'SimSun', serif;
-            font-size: 1.75rem;
-            font-weight: 500;
-            color: #3A4A5C;
-            letter-spacing: 4px;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2C3E50;
+            letter-spacing: 6px;
             text-shadow: 0 2px 8px rgba(58, 74, 92, 0.06);
         }
 
@@ -325,7 +326,7 @@
         }
 
         .comment-title {
-            font-family: 'Songti SC', 'SimSun', serif;
+            font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
             font-size: 1.25rem;
             color: #4A5A6C;
             letter-spacing: 3px;
@@ -404,8 +405,17 @@
         .wuxing-name {
             display: block;
             font-size: 0.8125rem;
-            color: #7A8C9E;
             margin-bottom: 4px;
+        }
+
+        .wuxing-name .wuxing-text {
+            color: #3A4A5C;
+            font-weight: 600;
+        }
+
+        .wuxing-name .wuxing-yinyang {
+            color: #9BA8B5;
+            font-size: 0.6875rem;
         }
 
         .wuxing-count {
@@ -421,6 +431,23 @@
         .wuxing-water { color: #3B7AA8; }
         .wuxing-fire { color: #C05A4A; }
         .wuxing-earth { color: #9B7A3F; }
+
+        /* 八字排盘 - 天干地支五行颜色 */
+        .gan-wood { color: #4A8B5C; }
+        .gan-fire { color: #C05A4A; }
+        .gan-earth { color: #9B7A3F; }
+        .gan-metal { color: #B8944F; }
+        .gan-water { color: #3B7AA8; }
+        .zhi-wood { color: #4A8B5C; }
+        .zhi-fire { color: #C05A4A; }
+        .zhi-earth { color: #9B7A3F; }
+        .zhi-metal { color: #B8944F; }
+        .zhi-water { color: #3B7AA8; }
+        .cang-gan-wood { color: #4A8B5C; }
+        .cang-gan-fire { color: #C05A4A; }
+        .cang-gan-earth { color: #9B7A3F; }
+        .cang-gan-metal { color: #B8944F; }
+        .cang-gan-water { color: #3B7AA8; }
 
         /* ========== 性别选择样式 ========== */
         .gender-group {
@@ -1896,23 +1923,31 @@
 格局：${patternResult.pattern}
 判定依据：${patternResult.reason}
 
+【分析权重说明】
+1. 第一权重：格局与日主属性
+2. 第二权重：月令
+3. 第三权重：其他五行配置
+
 【输出格式要求】
 请严格按照以下三个部分撰写评语，使用【】作为标题标记：
 
 【格局总结】
-开篇用一句话精准总结命局，必须包含：日主类型、格局名称、命局核心特点。
-格式示例：'您是${dayMaster}日主，属于${patternResult.pattern}，...'
+开篇用一句话点明日主类型和格局名称。
+然后结合月令（第二权重）、格局特点及五行数量分布，分析命局核心特点。
+要体现格局与日主的核心关系，以及月令对命局的关键影响。
 
 【性格与特质评价】
-结合性别、日主五行属性以及格局特点，进行深度性格分析。
-描述性格优势、内在特质、外在表现等方面。
+结合性别、日主五行属性以及格局特点，进行客观的性格分析。
+既要描述性格优势、内在特质、外在表现，也要适当点出潜在的不足或需要注意的性格弱点。
+整体基调客观中肯，不刻意回避缺点，也不过度渲染。
 
 【人生机遇和建议】
-根据地支特征和五行强弱分析人生机遇：
-- 事业发展方向和机遇
-- 适合的领域和特质
-- 需要注意的事项
-- 整体发展建议
+根据格局特点、地支特征和五行强弱，分析人生机遇：
+- 什么样的机会会比较多
+- 适合的发展方向和领域
+- 需要注意的事项和潜在风险
+
+注意：不要分析喜用神，不要给出"宜用XX、忌XX"之类的用神建议，只从机遇和注意事项角度分析。
 
 重要要求：
 - 不要提及任何具体数字（如"多少个"、"几个"），只用定性描述（如"较多"、"旺盛"、"适中"）
@@ -2534,17 +2569,28 @@
                 const gan = p.ganZhi[0];
                 const zhi = p.ganZhi[1];
                 const cangGan = zhiCangGan[zhi] || [];
-                const cangGanStr = cangGan.join("、");
+                
+                // 五行颜色映射
+                const wuxingToClass = { "金": "metal", "木": "wood", "水": "water", "火": "fire", "土": "earth" };
+                const ganColorClass = `gan-${wuxingToClass[ganWuxing[gan]] || 'earth'}`;
+                const zhiColorClass = `zhi-${wuxingToClass[zhiWuxing[zhi]] || 'earth'}`;
+                
+                // 藏干带颜色
+                const cangGanHtml = cangGan.map(cg => {
+                    const cgColorClass = `cang-gan-${wuxingToClass[ganWuxing[cg]] || 'earth'}`;
+                    return `<span class="${cgColorClass}">${cg}</span>`;
+                }).join('、');
+                
                 return `
                     <div class="bazi-pillar">
                         <span class="bazi-pillar-label">${p.label}</span>
                         <span class="bazi-pillar-ganzhi">
-                            <span class="bazi-pillar-gan">${gan}</span>
-                            <span class="bazi-pillar-zhi">${zhi}</span>
+                            <span class="bazi-pillar-gan ${ganColorClass}">${gan}</span>
+                            <span class="bazi-pillar-zhi ${zhiColorClass}">${zhi}</span>
                         </span>
                         <span class="bazi-pillar-hidden">
                             <span class="bazi-pillar-hidden-title">藏干</span>
-                            ${cangGanStr}
+                            ${cangGanHtml}
                         </span>
                     </div>
                 `;
@@ -2561,7 +2607,11 @@
                     if (v.hasYin) yinYang.push("阴");
                     return `
                         <div class="wuxing-item">
-                            <span class="wuxing-name">${wx}<br>(${yinYang.join("/")})</span>
+                            <span class="wuxing-name">
+                                <span class="wuxing-text ${wuxingClass[wx]}">${wx}</span>
+                                <br>
+                                <span class="wuxing-yinyang">(${yinYang.join("/")})</span>
+                            </span>
                             <span class="wuxing-count ${wuxingClass[wx]}">${v.count}</span>
                         </div>
                     `;
