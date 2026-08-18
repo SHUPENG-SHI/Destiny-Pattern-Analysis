@@ -660,12 +660,22 @@
 
     <script>
         // ========== AI 代理配置 ==========
-        // 本地服务器 (http://localhost:3002) → 走 AI 评语
-        // GitHub Pages 或 直接双击 HTML → 只用本地写好的评语（稳定可靠）
+        // 本地服务器 → 使用 /api/comment
+        // 云函数部署后 → 将 CLOUD_FUNCTION_URL 改为你的云函数地址
+        // GitHub Pages / 直接双击 → 使用云函数 URL（如已配置）
         const IS_LOCAL_SERVER = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-        const AI_PROXY_URL = '/api/comment';
-        const USE_AI = IS_LOCAL_SERVER;
+        
+        // 👇 部署云函数后，把下面这行改成你的云函数 URL 👇
+        // 阿里云示例: 'https://xxxxx.cn-hangzhou.fc.aliyuncs.com/api/comment'
+        // 腾讯云示例: 'https://xxxxx.gzfna.tencentapigw.com/api'
+        const CLOUD_FUNCTION_URL = 'https://bazi-comment-wgudkq.cn-hangzhou.fcapp.run';
+        
+        const AI_PROXY_URL = IS_LOCAL_SERVER 
+            ? '/api/comment' 
+            : (CLOUD_FUNCTION_URL || '/api/comment');
+        const USE_AI = IS_LOCAL_SERVER || CLOUD_FUNCTION_URL;
         console.log('[评语模式]', USE_AI ? 'AI 智能评语' : '本地规则评语');
+        console.log('[代理地址]', AI_PROXY_URL);
 
         // ========== 库加载状态检查 ==========
         // lunar-javascript 库必须正确加载才能计算八字
@@ -1887,25 +1897,28 @@
 判定依据：${patternResult.reason}
 
 【输出格式要求】
-请严格按照以下三个步骤撰写评语：
+请严格按照以下三个部分撰写评语，使用【】作为标题标记：
 
-【第一步：格局总结】
-开篇用一句话精准总结命局，格式为：'您是${dayMaster}日主，属于${patternResult.pattern}。'
+【格局总结】
+开篇用一句话精准总结命局，必须包含：日主类型、格局名称、命局核心特点。
+格式示例：'您是${dayMaster}日主，属于${patternResult.pattern}，...'
 
-【第二步：性格与特质评价】
+【性格与特质评价】
 结合性别、日主五行属性以及格局特点，进行深度性格分析。
+描述性格优势、内在特质、外在表现等方面。
 
-【第三步：人生机遇与特质分析】
-根据地支特征分析人生机遇：
-- 若地支有外出类特征：分析外出发展、迁居、异乡闯荡的机遇
-- 若地支有桃花类特征：分析感情缘分、异性缘的特点
-- 若地支有独立类特征：分析独立自主、白手起家的特质
-- 若无明显特征：给出均衡发展的建议
+【人生机遇和建议】
+根据地支特征和五行强弱分析人生机遇：
+- 事业发展方向和机遇
+- 适合的领域和特质
+- 需要注意的事项
+- 整体发展建议
 
 重要要求：
 - 不要提及任何具体数字（如"多少个"、"几个"），只用定性描述（如"较多"、"旺盛"、"适中"）
 - 语言温暖、通俗易懂、积极向上
-- 总字数控制在 350-400 字`;
+- 总字数控制在 400-500 字
+- 每个部分用【】开头，单独成段`;
 
             return prompt;
         }
