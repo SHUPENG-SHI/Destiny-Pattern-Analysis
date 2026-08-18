@@ -1958,7 +1958,21 @@
                 clearTimeout(timeoutId);
 
                 if (!response.ok) {
-                    throw new Error(`请求失败 (${response.status})`);
+                    // 尝试读取错误详情
+                    let errorDetail = '';
+                    try {
+                        const errorData = await response.json();
+                        console.log('[AI] 错误详情：', errorData);
+                        if (errorData.debug) {
+                            errorDetail = `\n[调试信息]: ${JSON.stringify(errorData.debug, null, 2)}`;
+                        }
+                        if (errorData.error) {
+                            errorDetail += `\n[错误]: ${errorData.error}`;
+                        }
+                    } catch (e) {
+                        // 无法解析 JSON
+                    }
+                    throw new Error(`请求失败 (${response.status})${errorDetail}`);
                 }
 
                 const data = await response.json();
