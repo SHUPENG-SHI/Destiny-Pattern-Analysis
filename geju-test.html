@@ -1334,12 +1334,12 @@
             const lunar = solar.getLunar();
 
             // 获取四柱干支
-            // getYearInGanZhi() - 年柱（干支，如 "甲子"）
-            // getMonthInGanZhi() - 月柱（干支，如 "丙寅"）
-            // getDayInGanZhi() - 日柱（干支，如 "戊戌"）
-            // getTimeInGanZhi() - 时柱（干支，如 "庚申"）
+            // getYearInGanZhiExact() - 年柱（以立春为界，符合八字命理）
+            // getMonthInGanZhi() - 月柱（以节气为界）
+            // getDayInGanZhi() - 日柱
+            // getTimeInGanZhi() - 时柱
             return {
-                yearPillar: lunar.getYearInGanZhi(),
+                yearPillar: lunar.getYearInGanZhiExact(),
                 monthPillar: lunar.getMonthInGanZhi(),
                 dayPillar: lunar.getDayInGanZhi(),
                 hourPillar: lunar.getTimeInGanZhi()
