@@ -1985,11 +1985,115 @@
 
         // ========== 解析 AI 返回内容 ==========
         function parseAIResponse(aiContent, stats, gender, patternResult) {
-            // 使用前端判定的格局（确保一致性）
+            // 将 AI 返回的内容转换成标准三段格式
+            let formatted = aiContent;
+            
+            // 尝试从 Markdown 标题或关键信息中提取三个部分
+            const parts = extractThreeParts(aiContent, patternResult);
+            
+            if (parts) {
+                formatted = `【格局总结】${parts.patternSummary}\n\n【性格与特质评价】${parts.personality}\n\n【人生机遇和建议】${parts.opportunity}`;
+            } else {
+                // 如果无法提取，尝试用 AI 原文但清理格式
+                formatted = cleanAIResponse(aiContent, patternResult);
+            }
+            
             return {
                 pattern: patternResult.pattern,
-                comment: aiContent
+                comment: formatted
             };
+        }
+
+        // 从 AI 返回内容中提取三个部分
+        function extractThreeParts(content, patternResult) {
+            // 尝试匹配 Markdown 标题格式 (# 或 ##)
+            const headingPatterns = [
+                /#{1,3}\s*(?:格局总结|八字排盘|八字分析|命局分析|综合评语|格局分析)[^\n]*\n([\s\S]*?)(?=\n#{1,3}\s|\n---|\n\*\*|$)/g,
+                /#{1,3}\s*(?:性格|特质|日主分析)[^\n]*\n([\s\S]*?)(?=\n#{1,3}\s|\n---|\n\*\*|$)/g,
+                /#{1,3}\s*(?:人生|建议|机遇|事业|大运)[^\n]*\n([\s\S]*?)(?=\n#{1,3}\s|\n---|\n\*\*|$)/g
+            ];
+            
+            let matches = [];
+            for (const pattern of headingPatterns) {
+                let match;
+                while ((match = pattern.exec(content)) !== null) {
+                    matches.push(match[1].trim());
+                }
+            }
+            
+            // 如果找到了三个以上的部分
+            if (matches.length >= 3) {
+                return {
+                    patternSummary: matches[0].substring(0, 200),
+                    personality: matches[1].substring(0, 300),
+                    opportunity: matches.slice(2).join('\n').substring(0, 300)
+                };
+            }
+            
+            // 备选：查找【】标记
+            const bracketPattern = /【(.+?)】([\s\S]*?)(?=【|$)/g;
+            let bracketMatch;
+            let bracketParts = {};
+            while ((bracketMatch = bracketPattern.exec(content)) !== null) {
+                const title = bracketMatch[1];
+                const body = bracketMatch[2].trim();
+                if (title.includes('格局')) bracketParts.patternSummary = body;
+                if (title.includes('性格') || title.includes('特质')) bracketParts.personality = body;
+                if (title.includes('机遇') || title.includes('建议') || title.includes('人生')) bracketParts.opportunity = body;
+            }
+            
+            if (bracketParts.patternSummary || bracketParts.personality || bracketParts.opportunity) {
+                return {
+                    patternSummary: bracketParts.patternSummary || content.substring(0, 100),
+                    personality: bracketParts.personality || '',
+                    opportunity: bracketParts.opportunity || ''
+                };
+            }
+            
+            return null;
+        }
+
+        // 清理 AI 返回内容
+        function cleanAIResponse(content, patternResult) {
+            // 移除 Markdown 标题
+            let text = content
+                .replace(/^#{1,6}\s+/gm, '')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/\n{3,}/g, '\n\n')
+                .replace(/---+/g, '')
+                .trim();
+            
+            // 提取关键内容
+            const lines = text.split('\n').filter(l => l.trim().length > 0);
+            
+            // 尝试识别格局总结、性格、建议
+            let patternSummary = '';
+            let personality = '';
+            let opportunity = '';
+            
+            // 查找相关段落
+            const fullText = text;
+            
+            // 格局总结：查找包含"格局"、"命局"、"日主"的句子
+            const sentences = text.split(/(?<=[。！？])/).filter(s => s.trim().length > 5);
+            
+            for (const s of sentences) {
+                if (s.includes('格局') || s.includes('命局') || s.includes('日主')) {
+                    patternSummary += s;
+                } else if (s.includes('性格') || s.includes('聪慧') || s.includes('特质') || s.includes('稳重')) {
+                    personality += s;
+                } else if (s.includes('事业') || s.includes('建议') || s.includes('机遇') || s.includes('方向')) {
+                    opportunity += s;
+                }
+            }
+            
+            // 如果提取不足，使用原文
+            if (!patternSummary) patternSummary = sentences.slice(0, 2).join('');
+            if (!personality) personality = sentences.slice(2, 5).join('');
+            if (!opportunity) opportunity = sentences.slice(5, 8).join('');
+            
+            return `【格局总结】${patternSummary}\n\n【性格与特质评价】${personality}\n\n【人生机遇和建议】${opportunity}`;
         }
 
         // ========== 本地 Mock 评语（API 不可用时的备选） ==========
