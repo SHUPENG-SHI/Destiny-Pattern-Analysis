@@ -199,6 +199,12 @@
         .result-value {
             color: #3A4A5C;
             font-weight: 500;
+            font-size: 1.05rem;
+        }
+
+        #genderValue {
+            font-size: 1.3rem;
+            font-weight: 600;
         }
 
         .result-divider {
@@ -1753,6 +1759,82 @@
                     const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
                     if (keWo[dayWuxing] === topWuxing) {
                         return { pattern: "从杀格", reason: "全局无印比，官杀成势" };
+                    }
+                }
+            }
+
+            // ========== 优先级 1.5：三合三会定局 ==========
+            // 三合局：亥卯未（木）、寅午戌（火）、申子辰（水）、巳酉丑（金）
+            // 三会局：寅卯辰（木）、巳午未（火）、申酉戌（金）、亥子丑（水）
+            // 三合三会成立时，该五行极旺，按正格名称判定（正财/偏财/混杂等）
+            {
+                const zhiList = [bazi.yearPillar[1], bazi.monthPillar[1], bazi.dayPillar[1], bazi.hourPillar[1]];
+                const sanHeJu = [
+                    { zhi: ["亥", "卯", "未"], wuxing: "木", name: "亥卯未三合木局" },
+                    { zhi: ["寅", "午", "戌"], wuxing: "火", name: "寅午戌三合火局" },
+                    { zhi: ["申", "子", "辰"], wuxing: "水", name: "申子辰三合水局" },
+                    { zhi: ["巳", "酉", "丑"], wuxing: "金", name: "巳酉丑三合金局" }
+                ];
+                const sanHuiJu = [
+                    { zhi: ["寅", "卯", "辰"], wuxing: "木", name: "寅卯辰三会木局" },
+                    { zhi: ["巳", "午", "未"], wuxing: "火", name: "巳午未三会火局" },
+                    { zhi: ["申", "酉", "戌"], wuxing: "金", name: "申酉戌三会金局" },
+                    { zhi: ["亥", "子", "丑"], wuxing: "水", name: "亥子丑三会水局" }
+                ];
+
+                for (const ju of [...sanHeJu, ...sanHuiJu]) {
+                    if (ju.zhi.every(z => zhiList.includes(z))) {
+                        const strongWuxing = ju.wuxing;
+                        const dayWuxing = ganWuxing[dayMasterGan];
+
+                        // 同五行（比劫）→ 不在此定格局，继续往下
+                        if (strongWuxing === dayWuxing) continue;
+
+                        // 获取该五行的所有天干（含藏干）
+                        const strongGans = wuxingStats[strongWuxing].gans;
+                        if (strongGans.length === 0) continue;
+
+                        // 计算十神
+                        const shishenList = strongGans.map(g => getShishen(dayMasterGan, g));
+
+                        // 五行关系
+                        const woSheng = { "木": "火", "火": "土", "土": "金", "金": "水", "水": "木" };
+                        const woKe = { "木": "土", "土": "水", "水": "火", "火": "金", "金": "木" };
+                        const keWo = { "木": "金", "金": "火", "火": "水", "水": "土", "土": "木" };
+                        const shengWo = { "木": "水", "水": "金", "金": "土", "土": "火", "火": "木" };
+
+                        if (woSheng[dayWuxing] === strongWuxing) {
+                            // 食伤
+                            const hasShi = shishenList.includes("食神");
+                            const hasShang = shishenList.includes("伤官");
+                            if (hasShi && hasShang) return { pattern: "食伤混杂格", reason: `${ju.name}，食伤极旺` };
+                            if (hasShi) return { pattern: "食神格", reason: `${ju.name}，食神极旺` };
+                            if (hasShang) return { pattern: "伤官格", reason: `${ju.name}，伤官极旺` };
+                        }
+                        if (woKe[dayWuxing] === strongWuxing) {
+                            // 财星
+                            const hasZheng = shishenList.includes("正财");
+                            const hasPian = shishenList.includes("偏财");
+                            if (hasZheng && hasPian) return { pattern: "正偏财混杂格", reason: `${ju.name}，财星极旺` };
+                            if (hasZheng) return { pattern: "正财格", reason: `${ju.name}，正财极旺` };
+                            if (hasPian) return { pattern: "偏财格", reason: `${ju.name}，偏财极旺` };
+                        }
+                        if (keWo[dayWuxing] === strongWuxing) {
+                            // 官杀
+                            const hasGuan = shishenList.includes("正官");
+                            const hasSha = shishenList.includes("七杀");
+                            if (hasGuan && hasSha) return { pattern: "官杀混杂格", reason: `${ju.name}，官杀极旺` };
+                            if (hasGuan) return { pattern: "正官格", reason: `${ju.name}，正官极旺` };
+                            if (hasSha) return { pattern: "七杀格", reason: `${ju.name}，七杀极旺` };
+                        }
+                        if (shengWo[dayWuxing] === strongWuxing) {
+                            // 印星
+                            const hasZheng = shishenList.includes("正印");
+                            const hasPian = shishenList.includes("偏印");
+                            if (hasZheng && hasPian) return { pattern: "正偏印混杂格", reason: `${ju.name}，印星极旺` };
+                            if (hasZheng) return { pattern: "正印格", reason: `${ju.name}，正印极旺` };
+                            if (hasPian) return { pattern: "偏印格", reason: `${ju.name}，偏印极旺` };
+                        }
                     }
                 }
             }
